@@ -275,9 +275,16 @@ module pcb_case(
         _case_snap_wedge_ab();
     }
 
+    // Lid in print orientation: top plate flat on the bed, skirt + posts up.
+    module _lid_print_oriented() {
+        translate([0, outer_w, skirt_height + lid_thickness])
+            rotate([180, 0, 0])
+            _lid();
+    }
+
     // ---------- Render ----------
     if      (show == "base")      _base();
-    else if (show == "lid")       _lid();
+    else if (show == "lid")       _lid_print_oriented();
     else if (show == "assembled") { _base(); translate([0, 0, lid_world_offset]) _lid(); }
-    else                          { _base(); translate([outer_l + 10, 0, 0]) _lid(); }
+    else                          { _base(); translate([outer_l + 10, 0, 0]) _lid_print_oriented(); }
 }
