@@ -90,6 +90,11 @@ module pcb_case(
     snap_offset_from_top = 1.5,            // case top to top of case ridge
     snap_end_inset       = 3.0,            // pull ridges away from corners
 
+    // ---- PCB hold-down posts on the lid ----
+    pcb_hold_down        = true,           // add corner posts that press the PCB down
+    corner_post_d        = 4.0,            // outer diameter of each post
+    corner_post_relief_d = 2.5,            // bottom relief diameter, clears the standoff pin
+
     // ---- Wall cutouts (see header for spec) ----
     cutouts              = [],
 
@@ -222,6 +227,21 @@ module pcb_case(
                          [0, 0]]);
     }
 
+    // PCB top in lid-local coordinates (skirt bottom = local Z 0)
+    pcb_top_local_z = pcb_top_z - lid_world_offset;
+
+    module _lid_corner_post() {
+        difference() {
+            // post extends from PCB top up to the underside of the lid top plate
+            translate([0, 0, pcb_top_local_z])
+                cylinder(h = top_clearance, d = corner_post_d, $fn = fn);
+            // relief at the bottom to clear the standoff pin
+            translate([0, 0, pcb_top_local_z - 0.05])
+                cylinder(h = pcb_thickness + 0.1,
+                         d = corner_post_relief_d, $fn = fn);
+        }
+    }
+
     module _lid() {
         // top plate
         translate([0, 0, skirt_height])
@@ -241,6 +261,11 @@ module pcb_case(
 
         _lid_snap_wedge_cd();
         _lid_snap_wedge_ab();
+
+        if (pcb_hold_down) {
+            for (p = hole_positions)
+                translate([p[0], p[1], 0]) _lid_corner_post();
+        }
     }
 
     module _base() {

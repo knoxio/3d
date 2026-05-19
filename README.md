@@ -69,6 +69,21 @@ Each cutout is a 5-element list:
   (`0` = flush with PCB top)
 - `height`          vertical extent of the cutout
 
+## PCB hold-down
+
+The lid has four corner posts (one at each PCB mounting hole) that drop
+`top_clearance` down to press the PCB onto the standoff shoulders. Each
+post has a small relief at its bottom so the standoff pin tucks inside.
+
+Posts assume **at least 2 mm of clearance around each PCB mounting hole**
+(so a 6 mm clear-circle diameter — components must not encroach). Toggle
+with `pcb_hold_down`; tune the diameter with `corner_post_d` if your
+clearance differs.
+
+**Print orientation:** the corner posts hang below the lid skirt, so the
+natural orientation is to print the lid upside-down (top plate flat on
+the bed, posts pointing up).
+
 ## Snap-fit print tuning
 
 After printing, if the lid is too tight or too loose, the knobs are:
