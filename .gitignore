@@ -1,0 +1,7 @@
+*.stl
+*.3mf
+*.csg
+*.bak
+*.backup
+*~
+.DS_Store
