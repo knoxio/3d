@@ -9,9 +9,9 @@
 // open only on the inner face below the tile height, so it is hidden behind
 // the tiles; front, outside and back show a plain seam.
 
-// parts: corner-bl corner-br corner-tl corner-tr straight-tt straight-st
+// parts: corner-bl corner-br corner-tl corner-tr straight-tt straight-st fit-test-0.05 fit-test-0.10
 
-part = "assembly"; // [assembly, corner-bl, corner-br, corner-tl, corner-tr, straight-tt, straight-st]
+part = "assembly"; // [assembly, corner-bl, corner-br, corner-tl, corner-tr, straight-tt, straight-st, fit-test-0.05, fit-test-0.10]
 
 /* [Art] */
 art_w = 1100;          // mm
@@ -40,7 +40,7 @@ tail_len = 10;         // mm, protrusion past the seam
 tail_root = [3, 12];   // mm, Z span at the seam
 tail_tip = [1.5, 13.5];// mm, Z span at the tip
 tail_skin = 4;         // mm, outer skin left in front of the tail (Y)
-fit = 0.15;            // mm, clearance per flank
+fit = 0.10;            // mm, clearance per flank (0.15 tested: slightly loose)
 seat_fit = 0.2;        // mm, extra clearance at the tip and seat
 
 /* [Cable] */
@@ -105,7 +105,7 @@ module tail(c = 0) {
     }
 }
 
-module socket() { tail(fit); }
+module socket(c = fit) { tail(c); }
 
 module straight(left, right) {
     difference() {
@@ -203,7 +203,22 @@ module assembly() {
     color("Wheat", 0.6) cube([art_w, art_h, art_depth]);
 }
 
+// Short socket-only coupon to test a clearance against an existing tail.
+// The clearance is debossed on the back.
+coupon_len = 30;
+module fit_coupon(c) {
+    difference() {
+        bar(0, coupon_len);
+        socket(c);
+        translate([(tail_len + coupon_len) / 2 + 1, face_w / 2, -0.01])
+            linear_extrude(0.6) mirror([1, 0, 0])
+                text(str(c), size = 5, halign = "center", valign = "center");
+    }
+}
+
 if (part == "assembly") assembly();
+else if (part == "fit-test-0.05") rotate([90, 0, 0]) fit_coupon(0.05);
+else if (part == "fit-test-0.10") rotate([90, 0, 0]) fit_coupon(0.10);
 else if (part == "straight-tt") print_straight("tail", "tail");
 else if (part == "straight-st") print_straight("socket", "tail");
 else print_corner(part);
