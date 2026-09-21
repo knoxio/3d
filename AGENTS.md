@@ -8,8 +8,8 @@ request is a printable file in `out/<slug>/` plus the source that produced it.
 
 ## Printer
 
-- Printer: **TBD** — build volume TBD. Until set, keep single parts within
-  180 × 180 × 180 mm and say so if a design needs more.
+- Printer: Bambu Lab **P1S**, build volume 256 × 256 × 256 mm. Keep parts
+  within ~245 mm on every axis for margin.
 - Nozzle 0.4 mm, layer height 0.2 mm, PLA unless the request says otherwise.
 
 ## Handling a request
