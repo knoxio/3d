@@ -13,6 +13,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Install OpenSCAD nightly
         run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq libegl1 libgl1 libopengl0 libglu1-mesa libfuse2 > /dev/null
           curl -fsSL -o openscad.AppImage \
             "$(curl -fsSL https://files.openscad.org/snapshots/ | grep -oE 'OpenSCAD-[0-9.]+-x86_64\.AppImage' | sort -V | tail -1 | sed 's#^#https://files.openscad.org/snapshots/#')"
           chmod +x openscad.AppImage
