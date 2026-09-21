@@ -37,7 +37,8 @@ LED is not visible from the front.
 Dovetail tail 10 mm long, flaring 9 → 12 mm, 1.5–13.5 mm off the wall, on a
 45° seat. It slides in from the art side, so the socket opens only on the
 inner face below tile height — hidden behind the tiles. Front, outside and
-back show a plain seam. Clearance 0.15 mm per flank, 0.2 mm at the seat.
+back show a plain seam. Clearance 0.10 mm per flank, 0.2 mm at the seat
+(0.15 printed slightly loose).
 
 Assembly: lay everything face-down on the floor, glue each joint and slide
 the tail in from the art side. Finish with a middle straight of any side.
@@ -63,8 +64,10 @@ length), dovetail (`tail_*`, `fit`, `seat_fit`), cable (`cable_x`, `cable_w`,
 - Orientation is baked into the files: every piece lies on its **outer**
   face. Corners have the other leg standing up (141.5 or 241.5 mm tall) — use
   a brim and consider slowing outer walls for the tall ones.
-- Print one `tt` and one `st` first and test the joint before the rest. If
-  it's tight, raise `fit`; if loose, lower it.
+- `art_frame-fit-test-0.05` / `-0.10`: 30 mm socket-only coupons, clearance
+  debossed on the back. Try them against any printed tail; set `fit` to the
+  one that slides in snug, rebuild, then print the rest. Only sockets depend
+  on `fit`, so already-printed tails stay compatible.
 - Solid model volume is ~4.8 L; at the settings above expect roughly
   1.5–2 kg of filament in total.
 
@@ -76,4 +79,5 @@ length), dovetail (`tail_*`, `fit`, `seat_fit`), cable (`cable_x`, `cable_w`,
 
 ## Status
 
-draft — not yet printed.
+test print: one `tt` + one `st` at `fit` 0.15 — joint works, slightly loose.
+Fit lowered to 0.10; coupons added to confirm before the full run.
