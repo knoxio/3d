@@ -49,4 +49,5 @@ variable and switch on it.
 
 | Slug | What |
 | --- | --- |
+| [`art-frame`](models/art-frame) | 14-piece dovetailed LED frame for a 1100 × 600 relief tile artwork |
 | [`pcb-cases`](models/pcb-cases) | Parametric snap-fit cases for bare PCBs |
