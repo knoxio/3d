@@ -14,7 +14,7 @@ OpenSCAD to see both.
 
 1. Copy a board file in this directory.
 2. Edit PCB dimensions, hole geometry, clearances and cutouts.
-3. `make MODEL=pcb-cases`.
+3. `mise run build pcb-cases`.
 
 ## Coordinate convention
 

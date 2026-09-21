@@ -24,9 +24,9 @@ request is a printable file in `out/<slug>/` plus the source that produced it.
    comment. No magic numbers in geometry.
 4. Model in the orientation it prints in: flat face on Z=0, nothing below
    Z=0. Multi-part objects declare `// parts: a b` and a `part` variable.
-5. `make MODEL=<slug>`, then **open the PNG preview(s) and check them** —
+5. `mise run build <slug>`, then **open the PNG preview(s) and check them** —
    shape, orientation, no missing or floating geometry. Iterate until right.
-6. `make check` must pass (it fails on any OpenSCAD warning).
+6. `mise run check` must pass (it fails on any OpenSCAD warning).
 7. Report back: the file(s) to open, print settings, and anything the owner
    has to decide or measure.
 

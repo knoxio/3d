@@ -1,0 +1,14 @@
+[tools]
+uv = "0.12"
+
+[tasks.build]
+description = "Build models into out/ (args: slugs, --format stl, --no-preview)"
+run = "uv run --script tools/build.py"
+
+[tasks.check]
+description = "Render every model and fail on any OpenSCAD warning"
+run = "uv run --script tools/build.py --check"
+
+[tasks.clean]
+description = "Remove build output"
+run = "rm -rf out"
