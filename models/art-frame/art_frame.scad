@@ -40,7 +40,7 @@ tail_len = 10;         // mm, protrusion past the seam
 tail_root = [3, 12];   // mm, Z span at the seam
 tail_tip = [1.5, 13.5];// mm, Z span at the tip
 tail_skin = 4;         // mm, outer skin left in front of the tail (Y)
-fit = 0.10;            // mm, clearance per flank (0.15 tested: slightly loose)
+fit = 0.05;            // mm, clearance per flank (coupon-tested: 0.15 loose, 0.05 snug)
 seat_fit = 0.2;        // mm, extra clearance at the tip and seat
 
 /* [Cable] */

@@ -37,8 +37,8 @@ LED is not visible from the front.
 Dovetail tail 10 mm long, flaring 9 → 12 mm, 1.5–13.5 mm off the wall, on a
 45° seat. It slides in from the art side, so the socket opens only on the
 inner face below tile height — hidden behind the tiles. Front, outside and
-back show a plain seam. Clearance 0.10 mm per flank, 0.2 mm at the seat
-(0.15 printed slightly loose).
+back show a plain seam. Clearance 0.05 mm per flank, 0.2 mm at the seat
+(coupon-tested: 0.15 loose, 0.05 snug).
 
 Assembly: lay everything face-down on the floor, glue each joint and slide
 the tail in from the art side. Finish with a middle straight of any side.
@@ -80,4 +80,4 @@ length), dovetail (`tail_*`, `fit`, `seat_fit`), cable (`cable_x`, `cable_w`,
 ## Status
 
 test print: one `tt` + one `st` at `fit` 0.15 — joint works, slightly loose.
-Fit lowered to 0.10; coupons added to confirm before the full run.
+Coupon test: 0.05 snug → `fit` set to 0.05 for the full run.
