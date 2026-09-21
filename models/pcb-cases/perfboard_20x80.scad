@@ -5,7 +5,11 @@
 // know where the USB / wires / buttons need to come out. See pcb_case.scad
 // for the wall labels and cutout spec.
 
-use <../pcb_case.scad>;
+// parts: base lid
+
+use <../../lib/pcb_case.scad>;
+
+part = "all"; // [all, base, lid, assembled]
 
 pcb_case(
     // long axis along X
@@ -23,5 +27,5 @@ pcb_case(
         // example: ["bd", 6, 10, 0, 6],
     ],
 
-    show = "all"
+    show = part
 );
