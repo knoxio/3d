@@ -5,3 +5,7 @@
 *.backup
 *~
 .DS_Store
+out/
+tmp/
+__pycache__/
+.venv/

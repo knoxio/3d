@@ -4,7 +4,11 @@
 //   - Two USB / data cutouts side by side on the bd wall, flush with PCB top.
 //   - One cable cutout on the ac wall, 2.4 mm above PCB top.
 
-use <../pcb_case.scad>;
+// parts: base lid
+
+use <../../lib/pcb_case.scad>;
+
+part = "all"; // [all, base, lid, assembled]
 
 pcb_case(
     pcb_length          = 70,
@@ -24,5 +28,5 @@ pcb_case(
         ["ac", 39,   11, 2.4, 6.5],   // ac wall: 20 mm from a (= 70 - 20 - 11 from c)
     ],
 
-    show = "all"
+    show = part
 );

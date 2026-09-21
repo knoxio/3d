@@ -1,94 +1,51 @@
 # 3d
 
-Parametric PCB cases for FDM 3D printing, written in OpenSCAD.
+Printable models and the generators that produce them. Sliced and printed in
+Bambu Studio.
 
 ## Layout
 
 ```
-pcb_case.scad       library: one module that builds a base + snap-fit lid
-boards/             one OpenSCAD file per board configuration
-  esp_70x30.scad
-  perfboard_20x80.scad
+models/<slug>/      one directory per object
+  README.md         what it is, parameters, print settings, status
+  <name>.scad       OpenSCAD source (parametric), and/or
+  <name>.py         Python generator (uv script, writes into the dir it is given)
+  *.stl / *.3mf     only for non-parametric meshes that have no source here
+lib/                shared OpenSCAD modules (`use <../../lib/x.scad>`)
+tools/build.py      builds everything under models/ into out/
+out/                build output, gitignored
+tmp/                scratch, gitignored
 ```
 
-## Use
+## Build
 
-Open a board file in OpenSCAD. **F5** to preview, **F6** to render, then
-export STL. The render selector at the bottom of each board file controls
-what is drawn:
+Requires `openscad` (2025+ with the manifold backend) and `uv`.
 
-- `"base"`      base only
-- `"lid"`       lid only (skirt down)
-- `"all"`       base + lid side by side (default)
-- `"assembled"` lid placed on top of base
-
-To make a case for a new board:
-
-1. Copy a file from `boards/`.
-2. Edit the PCB dimensions, hole geometry, clearances, and cutouts.
-3. Render and export STL.
-
-## Coordinate convention
-
-The PCB origin `(0, 0)` is at corner **d**. `pcb_length` runs along +X,
-`pcb_width` along +Y.
-
-```
-c -------------------- a
-|                      |
-|         PCB          |
-|                      |
-d -------------------- b
+```bash
+make
 ```
 
-Walls of the case are named after the PCB edge they enclose:
-
-- `bd`   wall along the low-Y edge  (between corners b and d)
-- `ac`   wall along the high-Y edge (between corners a and c)
-- `cd`   wall along the low-X edge  (between corners c and d)
-- `ab`   wall along the high-X edge (between corners a and b)
-
-Snap-fit wedges live on the `cd` / `ab` walls, so wall cutouts should go
-on `bd` / `ac` to avoid interfering with the snap mechanism. The library
-assumes `pcb_length >= pcb_width` — rotate dimensions if your board is
-taller than wide.
-
-## Cutouts
-
-Each cutout is a 5-element list:
-
-```
-[wall, low_pos, width, z_above_pcb_top, height]
+```bash
+make MODEL=pcb-cases
 ```
 
-- `wall`            `"bd" | "ac" | "cd" | "ab"`
-- `low_pos`         PCB-coord of the lower-coordinate end of the cutout
-  (X for `bd`/`ac` walls; Y for `cd`/`ab` walls)
-- `width`           extent along the wall direction
-- `z_above_pcb_top` vertical offset from the top surface of the PCB
-  (`0` = flush with PCB top)
-- `height`          vertical extent of the cutout
+```bash
+make stl
+```
 
-## PCB hold-down
+```bash
+make check
+```
 
-The lid has four corner posts (one at each PCB mounting hole) that drop
-`top_clearance` down to press the PCB onto the standoff shoulders. Each
-post has a small relief at its bottom so the standoff pin tucks inside.
+Output lands in `out/<slug>/` as `.3mf` (default) or `.stl`, with a `.png`
+preview next to each file. Open the `.3mf` in Bambu Studio.
 
-Posts assume **at least 2 mm of clearance around each PCB mounting hole**
-(so a 6 mm clear-circle diameter — components must not encroach). Toggle
-with `pcb_hold_down`; tune the diameter with `corner_post_d` if your
-clearance differs.
+A `// parts: base lid` line in a `.scad` file exports one file per part,
+passing `-D part="base"` etc. — the file must declare a top-level `part`
+variable and switch on it.
 
-**Print orientation:** the corner posts hang below the lid skirt, so the
-natural orientation is to print the lid upside-down (top plate flat on
-the bed, posts pointing up).
+## Models
 
-## Snap-fit print tuning
-
-After printing, if the lid is too tight or too loose, the knobs are:
-
-- `lid_clearance` (0.3) — increase if the lid is too tight to insert
-- `snap_ridge_depth` (0.4) — increase for stronger retention, decrease
-  if too hard to close
-- `skirt_height` (5.0) — taller skirt gives more guidance during insertion
+| Slug | What |
+| --- | --- |
+| [`pcb-cases`](models/pcb-cases) | Parametric snap-fit cases for bare PCBs |
