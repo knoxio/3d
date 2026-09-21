@@ -19,22 +19,23 @@ tmp/                scratch, gitignored
 
 ## Build
 
-Requires `openscad` (2025+ with the manifold backend) and `uv`.
+Requires `openscad` (2025+ with the manifold backend, `brew install openscad`)
+and [mise](https://mise.jdx.dev), which pins `uv`.
 
 ```bash
-make
+mise run build
 ```
 
 ```bash
-make MODEL=pcb-cases
+mise run build pcb-cases
 ```
 
 ```bash
-make stl
+mise run build -- --format stl
 ```
 
 ```bash
-make check
+mise run check
 ```
 
 Output lands in `out/<slug>/` as `.3mf` (default) or `.stl`, with a `.png`
