@@ -50,4 +50,5 @@ variable and switch on it.
 | Slug | What |
 | --- | --- |
 | [`art-frame`](models/art-frame) | 14-piece dovetailed LED frame for a 1100 × 600 relief tile artwork |
+| [`cabinet-light-guide`](models/cabinet-light-guide) | Hidden LED strip channel for a glass cabinet, 3 pieces per 560 mm run |
 | [`pcb-cases`](models/pcb-cases) | Parametric snap-fit cases for bare PCBs |
