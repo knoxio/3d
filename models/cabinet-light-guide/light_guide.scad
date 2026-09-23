@@ -18,12 +18,13 @@ pieces = 3;            // pieces per run
 depth = 20;            // mm, front to back
 plate_t = 2.4;         // mm, thickness of the plate that takes the tape
 fascia_t = 3;          // mm
-drop = 15;             // mm, how far the fascia hangs below the panel
+drop = 16;             // mm, how far the fascia hangs below the panel
 
 /* [Strip seat] */
-seat_front = 8;        // mm from the front face
+seat_front = 4;        // mm from the front face
+seat_len = 8;          // mm, length of the seat along the profile
 seat_tilt = 11.3;      // deg, aims the strip down and toward the back
-seat_z = 6;            // mm below the panel at seat_front
+seat_z = 5;            // mm below the panel at seat_front
 strip_w = 2;           // mm
 strip_clear = 0.6;     // mm, total clearance across the strip
 rib = [1, 1];          // mm, [width, height] of the retaining ribs
@@ -39,19 +40,26 @@ $fs = 0.4;
 
 run_len = inner_w - 2 * side_clear;
 piece_len = run_len / pieces;
-seat_drop = (depth - seat_front) * tan(seat_tilt);
-seat_back_z = seat_z - seat_drop;
+seat_back = seat_front + seat_len;
+seat_back_z = seat_z - seat_len * tan(seat_tilt);
 strip_gap = strip_w + strip_clear;
-seat_mid = (seat_front + depth) / 2;
+seat_mid = seat_front + seat_len / 2;
+
+// Above this angle from horizontal, a viewer below cannot see the strip past
+// the fascia. Their eye line to the top shelf is ~48 degrees.
+hide_angle = atan((drop - seat_z_at(seat_mid)) / (seat_mid - fascia_t));
 
 assert(piece_len + tongue_len <= 245, "piece too long for the P1S bed");
-assert(seat_back_z > plate_t, "seat runs into the plate; lower seat_tilt");
+assert(seat_back_z > plate_t, "seat runs into the plate; shorten seat_len");
+assert(hide_angle >= 60, "fascia too shallow to hide the strip at 48 degrees");
+echo(str("strip hidden above ", hide_angle, " deg from horizontal"));
 
 function seat_z_at(y) = seat_z - (y - seat_front) * tan(seat_tilt);
 
 // Cross-section in (y, z): y from the front face back, z down from the panel.
 function profile() = concat(
-    [[0, 0], [depth, 0], [depth, seat_back_z]],
+    [[0, 0], [depth, 0], [depth, plate_t], [seat_back, plate_t],
+     [seat_back, seat_back_z]],
     rib_points(),
     [[seat_front, seat_z], [seat_front, plate_t], [fascia_t, plate_t],
      [fascia_t, drop], [0, drop]]
