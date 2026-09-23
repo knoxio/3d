@@ -5,9 +5,9 @@
 // Two runs (cabinet top and mid shelf), each 3 pieces: 2 x guide + 1 x
 // guide-end. Print with the tape face on the bed; no supports.
 
-// parts: guide guide-end
+// parts: guide guide-end plate
 
-part = "run"; // [run, guide, guide-end]
+part = "run"; // [run, guide, guide-end, plate]
 
 /* [Cabinet] */
 inner_w = 560;         // mm, clear width between the side panels
@@ -28,6 +28,11 @@ seat_z = 5;            // mm below the panel at seat_front
 strip_w = 2;           // mm
 strip_clear = 0.6;     // mm, total clearance across the strip
 rib = [1, 1];          // mm, [width, height] of the retaining ribs
+
+/* [Plate] */
+bed = [256, 256];      // mm, P1S build plate
+plate_gap = 6;         // mm, spacing between pieces on the bed
+runs = 2;              // number of runs to lay out
 
 /* [Splice] */
 tongue_len = 8;        // mm
@@ -102,6 +107,17 @@ module piece(with_tongue) {
     }
 }
 
+// Every piece for `runs` runs, laid out side by side on one bed.
+module plate() {
+    total = runs * pieces;
+    width = total * depth + (total - 1) * plate_gap;
+    assert(piece_len + tongue_len <= bed[0] && width <= bed[1],
+        "pieces do not fit one bed; lower `runs` or split the plate");
+    for (i = [0 : total - 1])
+        translate([0, i * (depth + plate_gap), 0])
+            piece(i % pieces < pieces - 1);
+}
+
 module run() {
     for (i = [0 : pieces - 1])
         translate([i * piece_len, 0, 0]) color(i % 2 ? "LightSteelBlue" : "SteelBlue")
@@ -109,4 +125,5 @@ module run() {
 }
 
 if (part == "run") run();
+else if (part == "plate") plate();
 else piece(part == "guide");

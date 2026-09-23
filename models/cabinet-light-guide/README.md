@@ -15,6 +15,10 @@ through the glass shelf below it.
 Three pieces butt to 556 mm inside a 560 mm opening. Two runs: 4 × `guide`,
 2 × `guide-end`.
 
+`light_guide-plate.3mf` is all six laid out on one P1S plate (193 × 150 mm),
+ready to slice as-is. `runs` and `plate_gap` control the layout; the model
+asserts it fits the bed.
+
 ## Parameters
 
 | Variable | Default | Meaning |
@@ -22,6 +26,7 @@ Three pieces butt to 556 mm inside a 560 mm opening. Two runs: 4 × `guide`,
 | `inner_w` | 560 | clear width between the side panels |
 | `side_clear` | 2 | gap at each end of a run |
 | `pieces` | 3 | pieces per run |
+| `runs` / `plate_gap` / `bed` | 2 / 6 / [256, 256] | plate layout |
 | `depth` | 20 | front to back |
 | `plate_t` | 2.4 | plate that takes the tape |
 | `fascia_t` / `drop` | 3 / 16 | fascia thickness and how far it hangs down |
