@@ -10,8 +10,11 @@ about it is printable as-is. `astronaut.py` drives Blender to fix that:
 
 1. Swings the arms down from the T-pose (`arm_drop`, 35°). The swing is
    rigid, not skinned — the rig's smooth weights tear a 265-triangle
-   shoulder apart. The arm root stays buried in the torso and the remesh
-   welds it back on.
+   shoulder apart. The faces bridging arm to torso (the sleeve) are deleted
+   rather than dragged along, since dragging them smears the armpit into a
+   soft web; the arm's open root is instead extruded `arm_insert` mm straight
+   into the torso at full cross-section, and both openings are capped. The
+   remesh unions the two into a sharp armpit crease.
 1. Reproportions it: the body widens (`plump`) and compresses vertically
    (`squash`), while the head scales **uniformly** (`head_scale`) about the
    neck and drops with it. Body and head are treated separately on purpose —
@@ -39,8 +42,8 @@ about it is printable as-is. `astronaut.py` drives Blender to fix that:
 
 | File | Colour | Size | Volume |
 | --- | --- | --- | --- |
-| `astronaut-body.stl` | white | 36.4 × 21.7 × 49.9 | 11.6 cm³ |
-| `astronaut-visor.stl` | black | 22.0 × 21.0 × 9.6 | 0.9 cm³ |
+| `astronaut-body.stl` | white | 36.4 × 21.6 × 49.9 | 11.3 cm³ |
+| `astronaut-visor.stl` | black | 21.3 × 21.3 × 11.6 | 0.9 cm³ |
 | `astronaut-backpack.stl` | white | 17.8 × 25.9 × 12.4 | 2.1 cm³ |
 
 The soles are two flat patches totalling ~93 mm², so it stands unaided and
@@ -65,7 +68,7 @@ at the FBX, `--height` scales the figure, and every tuning constant in
 | Flag | Default | Meaning |
 | --- | --- | --- |
 | `--height` | 50 | mm, overall height |
-| `--arm-drop` | 35 | deg, arm swing from the T-pose |
+| `--arm-drop` / `--arm-insert` | 35 / 8 | deg of arm swing; mm the root is extruded into the torso |
 | `--min-feature` | 1.6 | mm, thinnest part allowed |
 | `--voxel` | 0.18 | mm, remesh resolution |
 | `--visor-depth` / `--visor-gap` | 3 / 0.15 | mm, plug depth and glue clearance |
@@ -120,4 +123,5 @@ aerials were delicate. v2 answers all three: keyring slot, plumper
 proportions with a bigger head, and the backpack split off to print flat.
 v3 flattens the soles. v4 shrinks it to 50 mm and
 fixes the helmet, which v2 had squashed by widening the whole figure: body
-and head are now reproportioned separately. Not yet printed.
+and head are now reproportioned separately. v5 sharpens the armpits. Not yet
+printed.
