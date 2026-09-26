@@ -72,6 +72,24 @@ def rotate_arms(obj, drop):
         log(f"arm {side}: rotated {moved} verts by {drop * sign:+.0f} deg")
 
 
+def scale_head(obj, factor):
+    """Grow the helmet about the neck — game-camera proportions, i.e. cuter."""
+    if factor == 1.0:
+        return
+    armature = bpy.data.objects["Armature"]
+    to_world, to_local = obj.matrix_world, obj.matrix_world.inverted()
+    group = obj.vertex_groups["Head"].index
+    pivot = armature.matrix_world @ armature.data.bones["Head"].head_local
+    moved = 0
+    for vert in obj.data.vertices:
+        if sum(g.weight for g in vert.groups if g.group == group) < 0.5:
+            continue
+        world = to_world @ vert.co
+        vert.co = to_local @ (pivot + (world - pivot) * factor)
+        moved += 1
+    log(f"head: scaled {moved} verts by {factor}")
+
+
 def fatten_thin_parts(obj, min_feature):
     """Widen any component thinner than the nozzle can print (the antennae)."""
     bm = bmesh.new()
@@ -190,14 +208,29 @@ def clean(obj):
     bm.to_mesh(obj.data)
     bm.free()
     log(f"cleaned {obj.name}: {len(obj.data.polygons)} tris, {open_edges} open edges")
+    return open_edges
 
 
-def keyring_hole(obj, dia, margin):
-    """Bore a left-to-right hole near the crown of the helmet.
+def make_solid(obj, voxel, angle):
+    """Simplify and clean; if that leaves the part open, remesh it and retry."""
+    simplify(obj, angle)
+    if clean(obj) == 0:
+        return
+    log(f"{obj.name} still open — remeshing again")
+    remesh(obj, voxel)
+    simplify(obj, angle)
+    if clean(obj) != 0:
+        raise SystemExit(f"{obj.name} could not be closed")
 
-    Sited `margin` below the top so the bridge above the hole is solid, and
-    centred on the helmet's own cross-section rather than the whole figure,
-    which is wider at the arms.
+
+def keyring_hole(obj, dia, margin, stretch, cone):
+    """Bore a left-to-right keyring slot near the crown of the helmet.
+
+    A round hole through a 16 mm helmet is a tunnel no split ring can curve
+    through, so the bore is stretched downward into a slot: the ring finds the
+    room it needs below the axis, while `margin` of solid helmet above the hole
+    is untouched. Sited on the helmet's own cross-section, not the whole
+    figure, which is wider at the arms.
     """
     verts = obj.data.vertices
     top = max(v.co.z for v in verts)
@@ -208,11 +241,115 @@ def keyring_hole(obj, dia, margin):
     cx = (max(p.x for p in band) + min(p.x for p in band)) / 2
     cy = (max(p.y for p in band) + min(p.y for p in band)) / 2
     span = max(obj.dimensions) * 2
-    bpy.ops.mesh.primitive_cylinder_add(radius=dia / 2, depth=span, location=(cx, cy, z), rotation=(0, math.radians(90), 0))
+    sideways = (0, math.radians(90), 0)
+
+    bpy.ops.mesh.primitive_cylinder_add(radius=dia / 2, depth=span, location=(cx, cy, z), rotation=sideways)
     drill = bpy.context.active_object
+    drill.scale = (1, 1, stretch)                      # stretch the bore downward
+    drill.location.z -= dia * (stretch - 1) / 2
+    bpy.ops.object.transform_apply(location=True, scale=True)
     boolean(obj, drill, "DIFFERENCE")
     bpy.data.objects.remove(drill, do_unlink=True)
-    log(f"keyring hole dia {dia} at z {z:.1f} ({margin} below the crown)")
+
+    if cone > 0:                                       # small lead-in at each mouth
+        half = max(abs(p.x) for p in band)
+        for side in (-1, 1):
+            bpy.ops.mesh.primitive_cone_add(
+                radius1=dia / 2 + cone, radius2=dia / 2, depth=cone,
+                location=(cx + side * (half - cone / 2), cy, z),
+                rotation=(0, math.radians(-90 * side), 0),
+            )
+            mouth = bpy.context.active_object
+            mouth.scale = (1, 1, stretch)
+            mouth.location.z -= dia * (stretch - 1) / 2
+            bpy.ops.object.transform_apply(location=True, scale=True)
+            boolean(obj, mouth, "DIFFERENCE")
+            bpy.data.objects.remove(mouth, do_unlink=True)
+    log(f"keyring slot {dia} x {dia * stretch:.1f}, {margin} below the crown")
+
+
+def bbox(verts):
+    return [(min(v.co[i] for v in verts), max(v.co[i] for v in verts)) for i in range(3)]
+
+
+def pack_faces(obj, behind_tol, centre_frac):
+    """Face indices of the backpack: the lumps sitting behind the torso.
+
+    The torso is the biggest component, so its back face is the divide. Taking
+    everything entirely behind it would also grab the two hip pods, which are
+    far out to the sides — hence the limit on how far off the centreline a
+    component may sit.
+    """
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    groups = components(bm)
+    boxes = [bbox(list({v for f in g for v in f.verts})) for g in groups]
+    torso = max(range(len(groups)), key=lambda i: len(groups[i]))
+    back = boxes[torso][1][1]
+    half_width = max(abs(b[0][i]) for b in boxes for i in (0, 1)) * centre_frac
+    chosen = [
+        i for i, b in enumerate(boxes)
+        if i != torso
+        and b[1][0] >= back - behind_tol
+        and abs((b[0][0] + b[0][1]) / 2) <= half_width
+    ]
+    if not chosen:
+        raise SystemExit("found nothing behind the torso to make a backpack from")
+    faces = {f.index for i in chosen for f in groups[i]}
+    log(f"backpack: {len(chosen)} of {len(groups)} components, {len(faces)} faces")
+    bm.free()
+    return faces
+
+
+def split_off(obj, face_indices, name):
+    """Copy those faces into a new object and delete them from the original."""
+    part = obj.copy()
+    part.data = obj.data.copy()
+    part.name = name
+    bpy.context.collection.objects.link(part)
+    for target, keep in ((part, True), (obj, False)):
+        bm = bmesh.new()
+        bm.from_mesh(target.data)
+        bm.faces.ensure_lookup_table()
+        doomed = [f for f in bm.faces if (f.index in face_indices) != keep]
+        bmesh.ops.delete(bm, geom=doomed, context="FACES")
+        bm.to_mesh(target.data)
+        bm.free()
+    return part
+
+
+def inflate(obj, amount):
+    """A copy grown along its normals, to cut a clearance gap with."""
+    grown = obj.copy()
+    grown.data = obj.data.copy()
+    bpy.context.collection.objects.link(grown)
+    mod = grown.modifiers.new("inflate", "DISPLACE")
+    mod.mid_level = 0.0
+    mod.strength = amount
+    bpy.context.view_layer.objects.active = grown
+    bpy.ops.object.modifier_apply(modifier="inflate")
+    return grown
+
+
+def locating_cone(body, pack, boss, fit):
+    """Cone on the torso's back, socket in the pack, so it only glues on true."""
+    verts = pack.data.vertices
+    cx = (max(v.co.x for v in verts) + min(v.co.x for v in verts)) / 2
+    cz = (max(v.co.z for v in verts) + min(v.co.z for v in verts)) / 2
+    hit, loc, _, _ = body.ray_cast((cx, max(v.co.y for v in verts) + 10, cz), (0, -1, 0))
+    if not hit:
+        raise SystemExit("no torso surface behind the backpack for the locating cone")
+    base, tip, length = boss
+    for obj, operation, grow in ((body, "UNION", 0.0), (pack, "DIFFERENCE", fit)):
+        bpy.ops.mesh.primitive_cone_add(
+            radius1=base / 2 + grow, radius2=tip / 2 + grow, depth=length + 1,
+            location=(cx, loc.y + (length + 1) / 2 - 1, cz),
+            rotation=(math.radians(-90), 0, 0),
+        )
+        cone = bpy.context.active_object
+        boolean(obj, cone, operation)
+        bpy.data.objects.remove(cone, do_unlink=True)
+    log(f"locating cone {base}->{tip} at ({cx:.1f}, {loc.y:.1f}, {cz:.1f})")
 
 
 def face_down(obj, normal):
@@ -256,22 +393,35 @@ bpy.ops.import_scene.fbx(filepath=cfg["src"])
 body = mesh_object()
 
 rotate_arms(body, cfg["arm_drop"])
+scale_head(body, cfg["head_scale"])
 for mod in list(body.modifiers):          # drop the armature, the pose is baked in
     body.modifiers.remove(mod)
 bpy.data.objects.remove(bpy.data.objects["Armature"], do_unlink=True)
 
 bpy.context.view_layer.update()
 scale = cfg["height"] / body.dimensions.z
-body.scale = [s * scale for s in body.scale]
+plump = cfg["plump"]
+body.scale = [body.scale[0] * scale * plump, body.scale[1] * scale * plump, body.scale[2] * scale]
 bpy.context.view_layer.objects.active = body
 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
 cutter, visor_normal = visor_cutter(body, cfg["visor_material"], cfg["visor_depth"])
-fatten_thin_parts(body, cfg["min_feature"])
 
-remesh(body, cfg["voxel"])
+pack = None
+if cfg["split_pack"]:
+    pack = split_off(body, pack_faces(body, cfg["pack_tol"], cfg["pack_centre_frac"]), "backpack")
 
-keyring_hole(body, cfg["keyring_dia"], cfg["keyring_margin"])
+for obj in filter(None, (body, pack)):
+    fatten_thin_parts(obj, cfg["min_feature"])
+    remesh(obj, cfg["voxel"])
+
+keyring_hole(body, cfg["keyring_dia"], cfg["keyring_margin"], cfg["keyring_stretch"], cfg["keyring_cone"])
+
+if pack is not None:
+    spacer = inflate(body, cfg["boss_fit"])      # so the pack sits on the torso, not in it
+    boolean(pack, spacer, "DIFFERENCE")
+    bpy.data.objects.remove(spacer, do_unlink=True)
+    locating_cone(body, pack, cfg["boss"], cfg["boss_fit"])
 
 visor = body.copy()
 visor.data = body.data.copy()
@@ -282,12 +432,20 @@ boolean(body, cutter, "DIFFERENCE")
 bpy.data.objects.remove(cutter, do_unlink=True)
 shrink(visor, cfg["visor_gap"])
 face_down(visor, visor_normal)
-for obj in (body, visor):
-    remesh(obj, cfg["voxel"])   # booleans leave slivers; voxels cannot
-    simplify(obj, cfg["simplify_angle"])
-    clean(obj)
+
+parts = [(body, "astronaut-body"), (visor, "astronaut-visor")]
+if pack is not None:
+    pack.rotation_euler = (math.radians(90), 0, 0)   # aerials along the bed, not standing
+    bpy.ops.object.select_all(action="DESELECT")
+    pack.select_set(True)
+    bpy.context.view_layer.objects.active = pack
+    bpy.ops.object.transform_apply(rotation=True)
+    parts.append((pack, "astronaut-backpack"))
+
+for obj, _ in parts:
+    make_solid(obj, cfg["voxel"], cfg["simplify_angle"])
 
 os.makedirs(cfg["out"], exist_ok=True)
-for obj, name in ((body, "astronaut-body"), (visor, "astronaut-visor")):
+for obj, name in parts:
     drop_to_bed(obj)
     export(obj, os.path.join(cfg["out"], f"{name}.stl"))
