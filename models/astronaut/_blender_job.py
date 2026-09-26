@@ -168,11 +168,13 @@ def fatten_thin_parts(obj, min_feature):
 
 
 def visor_cutter(obj, material, depth):
-    """A slab covering the visor faces, cutting `depth` into the helmet.
+    """A flat-backed prism over the visor, sunk `depth` into the helmet.
 
-    The visor faces are copied out of a duplicate (the original mesh must stay
-    whole) and thickened either side of the helmet surface, so the slab always
-    reaches through the shell no matter which way the faces point.
+    The visor faces form a shallow pyramid. Thickening them would follow that
+    shape and leave a dished pocket, so instead their outline is flattened
+    onto a plane `depth` behind the deepest one and extruded straight out
+    along the average normal. That gives the helmet a flat-floored recess and
+    the plug a flat back to print on.
     """
     names = [m.name for m in obj.data.materials]
     if material not in names:
@@ -194,15 +196,24 @@ def visor_cutter(obj, material, depth):
     if not bm.faces:
         raise SystemExit(f"no faces use {material}")
     normal = sum(((f.normal * f.calc_area()) for f in bm.faces), mathutils.Vector()).normalized()
+
+    floor = min(v.co.dot(normal) for v in bm.verts) - depth
+    for vert in bm.verts:                       # flatten onto the pocket floor
+        vert.co -= normal * (vert.co.dot(normal) - floor)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    facing = sum((f.normal for f in bm.faces), mathutils.Vector()).normalized()
+    if facing.dot(normal) > 0:
+        bmesh.ops.reverse_faces(bm, faces=bm.faces[:])   # extrude out, not in
+
+    grown = bmesh.ops.extrude_face_region(bm, geom=bm.faces[:])["geom"]
+    reach = depth * 6
+    for vert in (g for g in grown if isinstance(g, bmesh.types.BMVert)):
+        vert.co += normal * reach
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     bm.to_mesh(cutter.data)
     bm.free()
-
-    solid = cutter.modifiers.new("solid", "SOLIDIFY")
-    solid.thickness = depth * 2
-    solid.offset = 0.0           # centred on the surface, so it spans the shell
-    bpy.context.view_layer.objects.active = cutter
-    bpy.ops.object.modifier_apply(modifier="solid")
-    log("visor cutter:", len(cutter.data.polygons), "tris, normal", [round(v, 2) for v in normal])
+    log(f"visor pocket: {len(cutter.data.polygons)} tris, floor {depth} mm deep, "
+        f"normal {[round(v, 2) for v in normal]}")
     return cutter, normal
 
 
@@ -286,7 +297,7 @@ def make_solid(obj, voxel, angle):
         raise SystemExit(f"{obj.name} could not be closed")
 
 
-def keyring_hole(obj, dia, margin, stretch, cone):
+def keyring_hole(obj, dia, margin, back, stretch, cone):
     """Bore a left-to-right keyring slot near the crown of the helmet.
 
     A round hole through a 16 mm helmet is a tunnel no split ring can curve
@@ -302,7 +313,8 @@ def keyring_hole(obj, dia, margin, stretch, cone):
     if not band:
         raise SystemExit("no geometry at the keyring height")
     cx = (max(p.x for p in band) + min(p.x for p in band)) / 2
-    cy = (max(p.y for p in band) + min(p.y for p in band)) / 2
+    cy = (max(p.y for p in band) + min(p.y for p in band)) / 2 + back   # toward the rear,
+    # where the dome is narrower, so a ring has less tunnel to curve through
     span = max(obj.dimensions) * 2
     sideways = (0, math.radians(90), 0)
 
@@ -328,7 +340,7 @@ def keyring_hole(obj, dia, margin, stretch, cone):
             bpy.ops.object.transform_apply(location=True, scale=True)
             boolean(obj, mouth, "DIFFERENCE")
             bpy.data.objects.remove(mouth, do_unlink=True)
-    log(f"keyring slot {dia} x {dia * stretch:.1f}, {margin} below the crown")
+    log(f"keyring slot {dia} x {dia * stretch:.1f}, {margin} below the crown, {back} back")
 
 
 def flatten_feet(obj, trim):
@@ -400,38 +412,76 @@ def split_off(obj, face_indices, name):
     return part
 
 
-def inflate(obj, amount):
-    """A copy grown along its normals, to cut a clearance gap with."""
-    grown = obj.copy()
-    grown.data = obj.data.copy()
-    bpy.context.collection.objects.link(grown)
-    mod = grown.modifiers.new("inflate", "DISPLACE")
-    mod.mid_level = 0.0
-    mod.strength = amount
-    bpy.context.view_layer.objects.active = grown
-    bpy.ops.object.modifier_apply(modifier="inflate")
-    return grown
+def flat_pad(body, pack, gap, depth):
+    """Flatten where the backpack meets the torso, on both parts.
+
+    A pack moulded to the torso has a hollow in its face that prints badly —
+    supports will not sit in it. So the torso is shaved to a flat pad and the
+    pack is cut off flat to match, `gap` clear for glue. Only the pack's body
+    counts: its aerials lean over this plane and reach up behind the helmet,
+    and neither should be cut. Returns the plane's y and the body's top.
+    """
+    verts = pack.data.vertices
+    widths = {}
+    for v in verts:
+        key = round(v.co.z, 0)
+        lo_x, hi_x = widths.get(key, (v.co.x, v.co.x))
+        widths[key] = (min(lo_x, v.co.x), max(hi_x, v.co.x))
+    spans = {k: hi - lo for k, (lo, hi) in widths.items()}
+    body_top = max(k for k, w in spans.items() if w >= max(spans.values()) * 0.4)
+
+    chunk = [v.co for v in verts if v.co.z <= body_top]
+    x0, x1 = min(p.x for p in chunk), max(p.x for p in chunk)
+    z0 = min(p.z for p in chunk)
+    inside = [
+        v.co for v in body.data.vertices
+        if x0 - 1 < v.co.x < x1 + 1 and z0 - 1 < v.co.z < body_top + 1
+    ]
+    if not inside:
+        raise SystemExit("nothing of the torso behind the backpack to flatten")
+    pad_y = max(p.y for p in inside) - depth     # sunk in, or nothing gets flattened
+
+    size = max(body.dimensions) * 4
+    bpy.ops.mesh.primitive_cube_add(size=1)
+    shaver = bpy.context.active_object
+    shaver.scale = (x1 - x0, size, body_top - z0)
+    shaver.location = ((x0 + x1) / 2, pad_y + size / 2, (z0 + body_top) / 2)
+    bpy.ops.object.transform_apply(location=True, scale=True)
+    boolean(body, shaver, "DIFFERENCE")          # shave the torso back to the plane
+    bpy.data.objects.remove(shaver, do_unlink=True)
+
+    # Cut the pack off flat to match, across the whole part: the aerials lean
+    # forward over this plane too, and anything past it would hold the pack off
+    # the bed when it prints face-down.
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, pad_y + gap - size / 2, 0))
+    trim = bpy.context.active_object
+    boolean(pack, trim, "DIFFERENCE")
+    bpy.data.objects.remove(trim, do_unlink=True)
+
+    log(f"flat pad {x1 - x0:.0f} x {body_top - z0:.0f} mm at y={pad_y:.1f}, {depth} mm deep, "
+        f"{gap} mm glue gap")
+    return pad_y, body_top
 
 
-def locating_cone(body, pack, boss, fit):
-    """Cone on the torso's back, socket in the pack, so it only glues on true."""
+def locating_cones(body, pack, pad_y, top, boss, fit, count):
+    """Cones on the pad, sockets in the pack: one to locate, two to stop it
+    turning and to give the glue joint something to grip top and bottom."""
     verts = pack.data.vertices
     cx = (max(v.co.x for v in verts) + min(v.co.x for v in verts)) / 2
-    cz = (max(v.co.z for v in verts) + min(v.co.z for v in verts)) / 2
-    hit, loc, _, _ = body.ray_cast((cx, max(v.co.y for v in verts) + 10, cz), (0, -1, 0))
-    if not hit:
-        raise SystemExit("no torso surface behind the backpack for the locating cone")
+    lo, hi = min(v.co.z for v in verts), top      # the flat part only, not the aerials
     base, tip, length = boss
-    for obj, operation, grow in ((body, "UNION", 0.0), (pack, "DIFFERENCE", fit)):
-        bpy.ops.mesh.primitive_cone_add(
-            radius1=base / 2 + grow, radius2=tip / 2 + grow, depth=length + 1,
-            location=(cx, loc.y + (length + 1) / 2 - 1, cz),
-            rotation=(math.radians(-90), 0, 0),
-        )
-        cone = bpy.context.active_object
-        boolean(obj, cone, operation)
-        bpy.data.objects.remove(cone, do_unlink=True)
-    log(f"locating cone {base}->{tip} at ({cx:.1f}, {loc.y:.1f}, {cz:.1f})")
+    spots = [lo + (hi - lo) * f for f in ([0.5] if count < 2 else [0.25, 0.75])]
+    for cz in spots:
+        for obj, operation, grow in ((body, "UNION", 0.0), (pack, "DIFFERENCE", fit)):
+            bpy.ops.mesh.primitive_cone_add(
+                radius1=base / 2 + grow, radius2=tip / 2 + grow, depth=length + 1,
+                location=(cx, pad_y + (length + 1) / 2 - 1, cz),
+                rotation=(math.radians(-90), 0, 0),
+            )
+            cone = bpy.context.active_object
+            boolean(obj, cone, operation)
+            bpy.data.objects.remove(cone, do_unlink=True)
+    log(f"{len(spots)} locating cones {base}->{tip} at x={cx:.1f}, z={[round(s, 1) for s in spots]}")
 
 
 def face_down(obj, normal):
@@ -497,13 +547,12 @@ for obj in filter(None, (body, pack)):
     remesh(obj, cfg["voxel"])
 
 flatten_feet(body, cfg["foot_trim"])
-keyring_hole(body, cfg["keyring_dia"], cfg["keyring_margin"], cfg["keyring_stretch"], cfg["keyring_cone"])
+keyring_hole(body, cfg["keyring_dia"], cfg["keyring_margin"], cfg["keyring_back"],
+             cfg["keyring_stretch"], cfg["keyring_cone"])
 
 if pack is not None:
-    spacer = inflate(body, cfg["boss_fit"])      # so the pack sits on the torso, not in it
-    boolean(pack, spacer, "DIFFERENCE")
-    bpy.data.objects.remove(spacer, do_unlink=True)
-    locating_cone(body, pack, cfg["boss"], cfg["boss_fit"])
+    pad_y, pad_top = flat_pad(body, pack, cfg["boss_fit"], cfg["pad_depth"])
+    locating_cones(body, pack, pad_y, pad_top, cfg["boss"], cfg["boss_fit"], cfg["boss_count"])
 
 visor = body.copy()
 visor.data = body.data.copy()

@@ -29,15 +29,26 @@ about it is printable as-is. `astronaut.py` drives Blender to fix that:
 2. Widens anything thinner than `min_feature` (the aerials are 0.4 mm at this
    scale).
 3. Voxel-remeshes to one watertight solid, closing the open shells.
-4. Shaves `foot_trim` off the soles so it stands flat — the game feet taper
+4. Flattens where the backpack meets the torso: a pad sunk `pad_depth` into
+   the back, the pack cut off flat to match with `boss_fit` of glue gap, and
+   two locating cones. A pack moulded to the torso has a hollow in its face
+   that prints badly, and the cut also takes the aerials' forward lean off,
+   so the whole part lies down on the bed.
+5. Shaves `foot_trim` off the soles so it stands flat — the game feet taper
    to near-points. The height scale compensates, so `--height` still lands.
-5. Bores the keyring slot below the crown: a 4 mm bore stretched 1.7× downward.
-   A round hole through a 16 mm helmet is a tunnel no split ring can curve
-   through; a slot gives the ring room below the axis while keeping
-   `keyring_margin` of solid helmet above it.
-6. Splits the visor (faces using the `Player_Helm` material) into its own
+6. Bores the keyring slot below the crown: a 3.6 mm bore stretched 2× downward
+   and funnelled at each mouth. A round hole through the helmet is a tunnel no
+   split ring can curve through; the slot gives the ring room below the axis,
+   and the funnels — dropped by their own radius so they open downward only —
+   shorten the straight run without touching the `keyring_margin` of solid
+   helmet above. The helmet narrows sharply toward the crown, so height is the
+   main lever on bore length.
+7. Splits the visor (faces using the `Player_Helm` material) into its own
    part, shrunk by `visor_gap` so it drops into the recess with room for glue.
-7. Decimates coplanar triangles and triangulates before export, so the STL is
+   The pocket is a flat-backed prism, not a thickened copy of the visor faces:
+   those form a shallow pyramid, and following it would leave a dished recess
+   and a plug with no flat side to print on.
+8. Decimates coplanar triangles and triangulates before export, so the STL is
    a few MB rather than 20.
 
 The weld is a voxel remesh, which resamples every flat facet onto a grid and
@@ -53,9 +64,9 @@ close, and boolean unions over them come out hollow.
 
 | File | Colour | Size | Volume |
 | --- | --- | --- | --- |
-| `astronaut-body.stl` | white | 36.4 × 21.7 × 49.9 | 11.6 cm³ |
-| `astronaut-visor.stl` | black | 22.0 × 21.0 × 9.6 | 0.9 cm³ |
-| `astronaut-backpack.stl` | white | 17.8 × 25.9 × 12.4 | 2.1 cm³ |
+| `astronaut-body.stl` | white | 36.3 × 19.6 × 49.9 | 10.9 cm³ |
+| `astronaut-visor.stl` | black | 22.0 × 20.9 × 10.1 | 1.7 cm³ |
+| `astronaut-backpack.stl` | white | 17.8 × 25.9 × 8.4 | 1.2 cm³ |
 
 The soles are two flat patches totalling ~93 mm², so it stands unaided and
 sticks to the bed without a brim.
@@ -86,8 +97,11 @@ at the FBX, `--height` scales the figure, and every tuning constant in
 | `--plump` / `--squash` | 1.15 / 0.88 | body only: wider across, shorter |
 | `--head-scale` | 1.2 | helmet, uniform about the neck |
 | `--foot-trim` | 1.0 | mm shaved off the soles |
-| `--keyring-dia` / `--keyring-margin` | 4 / 3.5 | mm, bore and solid helmet above it |
-| `--keyring-stretch` / `--keyring-cone` | 1.7 / 1 | slot stretch downward; mouth lead-in |
+| `--keyring-dia` / `--keyring-margin` | 3.6 / 2 | mm, bore and solid helmet above it |
+| `--keyring-back` | 1.5 | mm toward the rear of the helmet |
+| `--keyring-stretch` / `--keyring-cone` | 2 / 3 | slot stretch downward; mouth funnel |
+| `--pad-depth` | 2 | mm the backpack pad is sunk into the torso |
+| `--boss-count` | 2 | locating cones on the pad |
 | `--split-pack` | 1 | 0 keeps the backpack on the body |
 | `--boss` / `--boss-fit` | 6 2 2 / 0.2 | mm, locating cone base/tip/length, clearance |
 | `--simplify-angle` | 2 | deg, coplanar merge limit |
@@ -98,9 +112,11 @@ at the FBX, `--height` scales the figure, and every tuning constant in
 - Body: white, standing as exported. Tree supports under the arms only now
   that the backpack is its own part; keep them off the helmet front.
 - Visor: black, face-down as exported, no supports.
-- Backpack: white, flat as exported. The aerials run along the bed — much
-  stronger than printing them upright — but hover ~5 mm up, so they need two
-  small supports.
+- Backpack: white, flat as exported, **no supports**. Its mating face is flat
+  and lies on the bed with ~229 mm² of contact, and the aerials — trimmed
+  flush with that face — rest on the bed too, so they print along their
+  length, which is far stronger than standing them up.
+- Visor: the plug is a flat slab, so it lies flat on the bed.
 - Glue the visor into its recess and the backpack onto the locating cone with
   a dab of CA.
 - The hole has ~99 mm² of solid helmet above it, which is far more than a
