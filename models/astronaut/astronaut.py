@@ -59,6 +59,7 @@ DEFAULTS = {
     "boss_count": 2,       # locating cones on the backpack pad
     "boss_fit": 0.2,       # mm, clearance on the locating cones
     "simplify_angle": 2.0, # deg, merge coplanar triangles below this angle
+    "assembly": 0,         # 1 also writes assembly-preview.stl (not printable)
 }
 
 
@@ -113,6 +114,8 @@ def verify(out: Path) -> int:
 
     bad = 0
     for path in sorted(out.glob("*.stl")):
+        if path.name.startswith("assembly"):
+            continue
         mesh = trimesh.load(path)
         mesh.merge_vertices()
         pieces = sorted(mesh.split(only_watertight=False), key=lambda p: -p.volume)

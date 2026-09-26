@@ -30,8 +30,9 @@ about it is printable as-is. `astronaut.py` drives Blender to fix that:
    scale).
 3. Voxel-remeshes to one watertight solid, closing the open shells.
 4. Flattens where the backpack meets the torso: a pad sunk `pad_depth` into
-   the back — shaved where the torso stands proud of that plane and filled
-   where it falls away, so the pad is a true plateau — the pack cut off flat
+   the back — the plane is set just under the 5th percentile of the back
+   surface inside the footprint, so shaving flattens nearly all of it rather
+   than clipping a few high spots — the pack cut off flat
    to match with `boss_fit` of glue gap, and two locating cones on the pad
    with sockets in the pack. Each boss is a shank buried in the torso plus
    the cone that stands proud, so its size at the pad does not change with
@@ -114,10 +115,20 @@ at the FBX, `--height` scales the figure, and every tuning constant in
 | `--keyring-back` | 1.5 | mm toward the rear of the helmet |
 | `--keyring-stretch` / `--keyring-cone` | 2 / 3 | slot stretch downward; mouth funnel |
 | `--pad-depth` | 2 | mm the backpack pad is sunk into the torso |
+| `--assembly` | 0 | 1 also writes `assembly-preview.stl`, for looking at, not printing |
 | `--boss-count` | 2 | locating cones on the pad |
 | `--split-pack` | 1 | 0 keeps the backpack on the body |
 | `--boss` / `--boss-fit` | 6 2 2 / 0.2 | mm, locating cone base/tip/length, clearance |
 | `--simplify-angle` | 2 | deg, coplanar merge limit |
+
+## Checking the fit
+
+`--assembly 1` writes `assembly-preview.stl`: the body and backpack as they
+sit together. It is not printable — it is there to look at.
+
+The pad ends up flat within ~0.4 mm, and the pegs stand ~4 mm proud of it
+(the cone plus however much shank the torso's curve exposes). The pack's
+sockets are cut from the same solids, so they match whatever is exposed.
 
 ## Print
 

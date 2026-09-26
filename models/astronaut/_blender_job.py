@@ -443,7 +443,13 @@ def flat_pad(body, pack, gap, depth):
     ]
     if not inside:
         raise SystemExit("nothing of the torso behind the backpack to flatten")
-    pad_y = max(p.y for p in inside) - depth     # sunk in, or nothing gets flattened
+    # Take the plane below the *lowest* point of the back within the footprint,
+    # not `depth` below the highest: the torso curves away across the pad, and
+    # a plane that only clips the high spots leaves hollows. Verts far forward
+    # are the chest, not the back, so they are ignored.
+    highest = max(p.y for p in inside)
+    back = sorted(p.y for p in inside if p.y > highest / 2)
+    pad_y = back[len(back) // 20] - 0.2      # 5th percentile of the back surface
 
     size = max(body.dimensions) * 4
     # Shave a touch wider than the pack, or the unshaved strips at the pad's
@@ -645,6 +651,13 @@ if pack is not None:
     pad_y, pad_z = flat_pad(body, pack, cfg["boss_fit"], cfg["pad_depth"])
     spots = locating_cones(body, pack, pad_y, pad_z, cfg["boss"], cfg["boss_fit"], cfg["boss_count"])
     check_joint(body, pack, pad_y, spots, cfg["boss"], cfg["boss_fit"])
+    if cfg["assembly"]:
+        # Not for printing: the parts as they sit assembled, for looking at.
+        joined = duplicate_of(body)
+        boolean(joined, duplicate_of(pack), "UNION")
+        os.makedirs(cfg["out"], exist_ok=True)
+        export(joined, os.path.join(cfg["out"], "assembly-preview.stl"))
+        bpy.data.objects.remove(joined, do_unlink=True)
 
 
 visor = body.copy()
