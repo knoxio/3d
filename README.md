@@ -45,10 +45,15 @@ A `// parts: base lid` line in a `.scad` file exports one file per part,
 passing `-D part="base"` etc. — the file must declare a top-level `part`
 variable and switch on it.
 
+A Python generator carrying a `# build: manual` comment is skipped by the
+build and by CI, because it needs tools or inputs that are not always there.
+Its model README says how to run it.
+
 ## Models
 
 | Slug | What |
 | --- | --- |
+| [`astronaut`](models/astronaut) | Game-asset astronaut turned into a two-part printable keyring (Blender pipeline) |
 | [`art-frame`](models/art-frame) | 14-piece dovetailed LED frame for a 1100 × 600 relief tile artwork |
 | [`cabinet-light-guide`](models/cabinet-light-guide) | Hidden LED strip channel for a glass cabinet, 3 pieces per 560 mm run |
 | [`pcb-cases`](models/pcb-cases) | Parametric snap-fit cases for bare PCBs |
