@@ -37,7 +37,6 @@ DEFAULT_SRC = Path.home() / (
 DEFAULTS = {
     "height": 50.0,        # mm, overall figure height
     "arm_drop": 35.0,      # deg, how far the arms swing down from the T-pose
-    "arm_insert": 8.0,     # mm the arm root is extruded into the torso before welding
     "min_feature": 1.6,    # mm, thinnest part allowed (the aerials get widened to this)
     "voxel": 0.18,         # mm, remesh resolution
     "visor_material": "Player_Helm",

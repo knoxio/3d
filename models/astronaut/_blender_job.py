@@ -44,67 +44,32 @@ def components(bm):
     return groups
 
 
-def cap_holes(bm):
-    """Close every border loop; returns how many edges were left open."""
-    for _ in range(3):
-        border = [e for e in bm.edges if len(e.link_faces) == 1]
-        if not border:
-            break
-        bmesh.ops.holes_fill(bm, edges=border)
-        border = [e for e in bm.edges if len(e.link_faces) == 1]
-        if border:
-            bmesh.ops.triangle_fill(bm, edges=border, use_beauty=True)
-    return sum(1 for e in bm.edges if len(e.link_faces) == 1)
+def rotate_arms(obj, drop):
+    """Rigidly swing each arm down about its shoulder.
 
-
-def rotate_arms(obj, drop, insert):
-    """Rigidly swing each arm down about its shoulder, with a crisp armpit.
-
-    The rig's smooth skinning tears a 265-triangle shoulder apart, so the arm
-    moves as one solid piece. The faces bridging arm to torso — the sleeve —
-    are deleted rather than dragged along, because dragging them smears the
-    armpit into a soft web. The arm's open root is then extruded straight into
-    the torso, keeping its full cross-section, and the remesh unions the two
-    into a sharp crease.
+    The rig's smooth skinning tears the low-poly shoulder apart, so instead
+    every vertex mostly weighted to an arm is rotated as one solid piece. The
+    arm root stays buried inside the torso, and the remesh welds it back on.
+    The maths is done in world space: the mesh and the armature do not share
+    a local frame after an FBX import.
     """
     armature = bpy.data.objects["Armature"]
-    to_world, to_local = obj.matrix_world, obj.matrix_world.inverted()
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
-    weights = bm.verts.layers.deform.active
-
+    to_world = obj.matrix_world
+    to_local = to_world.inverted()
     for side, sign in (("Left", 1), ("Right", -1)):
         groups = [obj.vertex_groups[f"Arm_{n}_{side}"].index for n in (1, 2)]
-        pivot = armature.matrix_world @ armature.data.bones[f"Arm_1_{side}"].head_local
-        arm = {v for v in bm.verts if sum(v[weights].get(g, 0) for g in groups) >= 0.5}
-        sleeve = [f for f in bm.faces if 0 < sum(v in arm for v in f.verts) < len(f.verts)]
-        bmesh.ops.delete(bm, geom=sleeve, context="FACES_ONLY")   # keep the verts we still refer to
-
-        ring = [e for e in bm.edges if len(e.link_faces) == 1 and all(v in arm for v in e.verts)]
-        if not ring:
-            raise SystemExit(f"no open root ring on the {side} arm")
-        centre = sum(((to_world @ v.co) for e in ring for v in e.verts), mathutils.Vector())
-        centre /= 2 * len(ring)
-        inward = (pivot - centre)
-        inward = inward.normalized() if inward.length > 1e-6 else mathutils.Vector((0, 0, -1))
-
-        grown = bmesh.ops.extrude_edge_only(bm, edges=ring)["geom"]
-        new_verts = [g for g in grown if isinstance(g, bmesh.types.BMVert)]
-        for vert in new_verts:
-            vert.co = to_local @ ((to_world @ vert.co) + inward * insert)
-        arm |= set(new_verts)
-
+        bone = armature.data.bones[f"Arm_1_{side}"]
+        pivot = armature.matrix_world @ bone.head_local
         rot = mathutils.Matrix.Rotation(math.radians(drop) * sign, 4, "Y")
-        for vert in arm:
-            vert.co = to_local @ (rot @ ((to_world @ vert.co) - pivot) + pivot)
-        log(f"arm {side}: {len(arm)} verts, root extruded {insert} mm in, {drop * sign:+.0f} deg")
-
-    left = cap_holes(bm)
-    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
-    bm.to_mesh(obj.data)
-    bm.free()
-    if left:
-        raise SystemExit(f"shoulders left {left} open edges")
+        moved = 0
+        for vert in obj.data.vertices:
+            weight = sum(g.weight for g in vert.groups if g.group in groups)
+            if weight < 0.5:
+                continue
+            world = to_world @ vert.co
+            vert.co = to_local @ (rot @ (world - pivot) + pivot)
+            moved += 1
+        log(f"arm {side}: rotated {moved} verts by {drop * sign:+.0f} deg")
 
 
 def reproportion(obj, plump, squash, head_scale):
@@ -475,7 +440,7 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.fbx(filepath=cfg["src"])
 body = mesh_object()
 
-rotate_arms(body, cfg["arm_drop"], cfg["arm_insert"])
+rotate_arms(body, cfg["arm_drop"])
 reproportion(body, cfg["plump"], cfg["squash"], cfg["head_scale"])
 for mod in list(body.modifiers):          # drop the armature, the pose is baked in
     body.modifiers.remove(mod)
