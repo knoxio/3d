@@ -62,11 +62,11 @@ def rotate_arms(obj, drop, insert):
 
     The rig's smooth skinning tears a 265-triangle shoulder apart, so the arm
     moves as one solid piece, dragging the faces that bridge it to the torso.
-    Up top that drag is what shapes the shoulder and is left alone. Underneath
-    it scoops into a rounded web that makes the arm look pinched, so those
-    downward-facing bridge faces are dropped and the arm's underside is
-    extruded straight on along its own axis into the torso, giving the remesh
-    a sharp crease to union.
+    That drag shapes the shoulder, but underneath it sags into a rounded web
+    that makes the arm look pinched. Nothing is cut away — cutting leaves
+    slots and holes where the arm stands off the torso — instead the arm's
+    own underside is extended into the torso as a slab, filling the hollow so
+    the weld reads as a sharp crease.
     """
     armature = bpy.data.objects["Armature"]
     to_world, to_local = obj.matrix_world, obj.matrix_world.inverted()
@@ -85,28 +85,25 @@ def rotate_arms(obj, drop, insert):
             vert.co = to_local @ (rot @ ((to_world @ vert.co) - pivot) + pivot)
 
         bm.normal_update()
-        sleeve = [f for f in bm.faces if 0 < sum(v in arm for v in f.verts) < len(f.verts)]
-        underside = [f for f in sleeve if (normal_to_world @ f.normal).z < 0]
-        bmesh.ops.delete(bm, geom=underside, context="FACES_ONLY")
+        soles = [
+            f for f in bm.faces
+            if all(v in arm for v in f.verts)
+            and (normal_to_world @ f.normal).normalized().z < -0.4
+        ]
+        if not soles:
+            raise SystemExit(f"no underside face found on the {side} arm")
+        copied = [g for g in bmesh.ops.duplicate(bm, geom=soles)["geom"]
+                  if isinstance(g, bmesh.types.BMFace)]
+        walls = bmesh.ops.extrude_face_region(bm, geom=copied)["geom"]
+        for vert in (g for g in walls if isinstance(g, bmesh.types.BMVert)):
+            towards = pivot - (to_world @ vert.co)
+            vert.co = to_local @ ((to_world @ vert.co)
+                                  + towards.normalized() * min(insert, towards.length * 0.9))
+        log(f"arm {side}: {drop * sign:+.0f} deg, {len(soles)} underside faces carried "
+            f"{insert} mm into the torso")
 
-        tip = max((to_world @ v.co for v in arm), key=lambda p: (p - pivot).length)
-        inward = (pivot - tip).normalized()
-        ring = [e for e in bm.edges if len(e.link_faces) == 1 and all(v in arm for v in e.verts)]
-        moved = 0
-        if ring:
-            grown = bmesh.ops.extrude_edge_only(bm, edges=ring)["geom"]
-            for vert in (g for g in grown if isinstance(g, bmesh.types.BMVert)):
-                vert.co = to_local @ ((to_world @ vert.co) + inward * insert)
-                moved += 1
-        log(f"arm {side}: {drop * sign:+.0f} deg, {len(underside)}/{len(sleeve)} bridge faces "
-            f"re-cut, underside carried {insert} mm in on {moved} verts")
-
-    left = cap_holes(bm)
-    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
     bm.to_mesh(obj.data)
     bm.free()
-    if left:
-        raise SystemExit(f"shoulders left {left} open edges")
 
 
 def reproportion(obj, plump, squash, head_scale):
