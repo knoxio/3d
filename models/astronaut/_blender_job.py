@@ -193,6 +193,13 @@ def clean(obj):
     bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=0.01)
     bmesh.ops.dissolve_degenerate(bm, dist=0.01, edges=bm.edges[:])
     bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+    extra = []
+    for edge in bm.edges:                       # flaps hanging off a non-manifold edge
+        if len(edge.link_faces) > 2:
+            extra.extend(sorted(edge.link_faces, key=lambda f: f.calc_area())[:-2])
+    if extra:
+        bmesh.ops.delete(bm, geom=list(set(extra)), context="FACES")
+        log(f"dropped {len(set(extra))} non-manifold faces from {obj.name}")
     flat = [f for f in bm.faces if f.calc_area() < 1e-4]   # degenerate, not just small
     if flat:
         bmesh.ops.delete(bm, geom=flat, context="FACES")
@@ -204,6 +211,9 @@ def clean(obj):
         bmesh.ops.delete(bm, geom=[f for g in slivers for f in g], context="FACES")
         log(f"dropped {len(slivers)} sliver shells from {obj.name}")
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    # filled holes can be non-planar n-gons, which the STL writer chops into
+    # slivers — triangulate here so the exporter has nothing left to decide
+    bmesh.ops.triangulate(bm, faces=bm.faces[:])
     open_edges = sum(1 for e in bm.edges if len(e.link_faces) != 2)
     bm.to_mesh(obj.data)
     bm.free()
@@ -266,6 +276,25 @@ def keyring_hole(obj, dia, margin, stretch, cone):
             boolean(obj, mouth, "DIFFERENCE")
             bpy.data.objects.remove(mouth, do_unlink=True)
     log(f"keyring slot {dia} x {dia * stretch:.1f}, {margin} below the crown")
+
+
+def flatten_feet(obj, trim):
+    """Shave the soles flat.
+
+    The game feet taper to a near-point, so the figure lands on two tiny
+    contact patches. Cutting `trim` off the bottom gives it real soles to
+    stand on and to stick to the bed.
+    """
+    if trim <= 0:
+        return
+    verts = obj.data.vertices
+    floor = min(v.co.z for v in verts) + trim
+    size = max(obj.dimensions) * 4
+    bpy.ops.mesh.primitive_cube_add(size=size, location=(0, 0, floor - size / 2))
+    block = bpy.context.active_object
+    boolean(obj, block, "DIFFERENCE")
+    bpy.data.objects.remove(block, do_unlink=True)
+    log(f"feet: trimmed {trim} mm flat")
 
 
 def bbox(verts):
@@ -399,7 +428,7 @@ for mod in list(body.modifiers):          # drop the armature, the pose is baked
 bpy.data.objects.remove(bpy.data.objects["Armature"], do_unlink=True)
 
 bpy.context.view_layer.update()
-scale = cfg["height"] / body.dimensions.z
+scale = (cfg["height"] + cfg["foot_trim"]) / body.dimensions.z   # trim comes off later
 plump = cfg["plump"]
 body.scale = [body.scale[0] * scale * plump, body.scale[1] * scale * plump, body.scale[2] * scale]
 bpy.context.view_layer.objects.active = body
@@ -415,6 +444,7 @@ for obj in filter(None, (body, pack)):
     fatten_thin_parts(obj, cfg["min_feature"])
     remesh(obj, cfg["voxel"])
 
+flatten_feet(body, cfg["foot_trim"])
 keyring_hole(body, cfg["keyring_dia"], cfg["keyring_margin"], cfg["keyring_stretch"], cfg["keyring_cone"])
 
 if pack is not None:

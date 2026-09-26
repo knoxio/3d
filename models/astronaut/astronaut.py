@@ -1,6 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.12"
+# dependencies = ["trimesh", "networkx"]
 # ///
 # build: manual — needs Blender and the game repo, so CI skips it.
 """Turn the Unspoken game's astronaut into a printable two-part keyring.
@@ -43,6 +44,7 @@ DEFAULTS = {
     "visor_gap": 0.15,     # mm, clearance around the plug for glue
     "plump": 1.18,         # widen X/Y against height — game-camera proportions
     "head_scale": 1.1,     # helmet scale about the neck
+    "foot_trim": 1.0,      # mm shaved off the soles so it stands flat
     "keyring_dia": 4.0,    # mm
     "keyring_margin": 3.5, # mm of solid helmet above the hole
     "keyring_stretch": 1.7,  # bore stretched downward into a slot, so a ring can curve through
@@ -89,7 +91,24 @@ def main() -> int:
         print(result.stdout[-2000:], file=sys.stderr)
         print(result.stderr[-2000:], file=sys.stderr)
         return 1
-    return result.returncode
+    return verify(args.out)
+
+
+def verify(out: Path) -> int:
+    """Every part must come out a single watertight solid, or this failed."""
+    import trimesh
+
+    bad = 0
+    for path in sorted(out.glob("*.stl")):
+        mesh = trimesh.load(path)
+        mesh.merge_vertices()
+        shells = len(mesh.split(only_watertight=False))
+        ok = mesh.is_watertight and shells == 1
+        size = " x ".join(f"{v:.1f}" for v in mesh.extents)
+        print(f"{'ok  ' if ok else 'BAD '} {path.name}: {size} mm, {mesh.volume / 1000:.2f} cm3"
+              + ("" if ok else f", watertight={mesh.is_watertight}, {shells} shells"))
+        bad += not ok
+    return 1 if bad else 0
 
 
 if __name__ == "__main__":

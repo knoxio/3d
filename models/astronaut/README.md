@@ -22,22 +22,27 @@ about it is printable as-is. `astronaut.py` drives Blender to fix that:
 2. Widens anything thinner than `min_feature` (the aerials are 0.4 mm at this
    scale).
 3. Voxel-remeshes to one watertight solid, closing the open shells.
-4. Bores the keyring slot below the crown: a 4 mm bore stretched 1.7× downward.
+4. Shaves `foot_trim` off the soles so it stands flat — the game feet taper
+   to near-points. The height scale compensates, so `--height` still lands.
+5. Bores the keyring slot below the crown: a 4 mm bore stretched 1.7× downward.
    A round hole through a 16 mm helmet is a tunnel no split ring can curve
    through; a slot gives the ring room below the axis while keeping
    `keyring_margin` of solid helmet above it.
-5. Splits the visor (faces using the `Player_Helm` material) into its own
+6. Splits the visor (faces using the `Player_Helm` material) into its own
    part, shrunk by `visor_gap` so it drops into the recess with room for glue.
-6. Decimates coplanar triangles and triangulates before export, so the STL is
+7. Decimates coplanar triangles and triangulates before export, so the STL is
    a few MB rather than 20.
 
 ## Parts
 
 | File | Colour | Size | Volume |
 | --- | --- | --- | --- |
-| `astronaut-body.stl` | white | 38.9 × 24.7 × 54.9 | 15.2 cm³ |
-| `astronaut-visor.stl` | black | 24.8 × 20.2 × 10.4 | 1.0 cm³ |
-| `astronaut-backpack.stl` | white | 19.0 × 30.7 × 13.2 | 2.8 cm³ |
+| `astronaut-body.stl` | white | 39.7 × 25.3 × 54.9 | 16.0 cm³ |
+| `astronaut-visor.stl` | black | 25.3 × 20.6 × 10.6 | 1.1 cm³ |
+| `astronaut-backpack.stl` | white | 19.4 × 31.2 × 13.5 | 2.9 cm³ |
+
+The soles are two flat patches totalling ~93 mm², so it stands unaided and
+sticks to the bed without a brim.
 
 All three are single watertight solids sitting on Z = 0 in print orientation:
 the body standing, the visor face-down, the backpack on its mating face with
@@ -49,7 +54,8 @@ the aerials running along the bed.
 uv run --script models/astronaut/astronaut.py out/astronaut
 ```
 
-Marked `build: manual`, so `mise run build` and CI skip it — it needs Blender
+Every part is checked after export: a part that is not a single watertight
+solid fails the run. Marked `build: manual`, so `mise run build` and CI skip it — it needs Blender
 (`brew install --cask blender`) and the game repo checked out. `--src` points
 at the FBX, `--height` scales the figure, and every tuning constant in
 `DEFAULTS` has a matching flag.
@@ -62,6 +68,7 @@ at the FBX, `--height` scales the figure, and every tuning constant in
 | `--voxel` | 0.18 | mm, remesh resolution |
 | `--visor-depth` / `--visor-gap` | 3 / 0.15 | mm, plug depth and glue clearance |
 | `--plump` / `--head-scale` | 1.18 / 1.1 | widen against height; helmet scale |
+| `--foot-trim` | 1.0 | mm shaved off the soles |
 | `--keyring-dia` / `--keyring-margin` | 4 / 3.5 | mm, bore and solid helmet above it |
 | `--keyring-stretch` / `--keyring-cone` | 1.7 / 1 | slot stretch downward; mouth lead-in |
 | `--split-pack` | 1 | 0 keeps the backpack on the body |
@@ -106,6 +113,6 @@ the mesh or sell prints of it.
 
 v1 printed at 55 mm: good, but the 3.5 mm round bore was a 16 mm tunnel no
 keyring could curve through, the figure read too tall, and the upright
-aerials were delicate. v2 (this version) answers all three: keyring slot,
-plumper proportions with a bigger head, and the backpack split off to print
-flat. Not yet printed.
+aerials were delicate. v2 answers all three: keyring slot, plumper
+proportions with a bigger head, and the backpack split off to print flat.
+v3 flattens the soles. Not yet printed.
