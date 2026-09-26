@@ -71,7 +71,8 @@ close, and boolean unions over them come out hollow.
 | --- | --- | --- | --- |
 | `astronaut-body.stl` | white | 36.3 × 19.6 × 49.9 | 10.9 cm³ |
 | `astronaut-visor.stl` | black | 22.0 × 20.9 × 10.1 | 1.7 cm³ |
-| `astronaut-backpack.stl` | white | 17.8 × 25.9 × 8.4 | 1.2 cm³ |
+| `astronaut-backpack.stl` | white | 17.8 × 25.9 × 10.3 | 1.6 cm³ |
+| `astronaut-visor-facets.stl` | black | 84.6 × 14.0 × 7.9 | 1.7 cm³ |
 
 The soles are two flat patches totalling ~93 mm², so it stands unaided and
 sticks to the bed without a brim.
@@ -116,10 +117,21 @@ at the FBX, `--height` scales the figure, and every tuning constant in
 | `--keyring-stretch` / `--keyring-cone` | 2 / 3 | slot stretch downward; mouth funnel |
 | `--pad-depth` | 2 | mm the backpack pad is sunk into the torso |
 | `--assembly` | 0 | 1 also writes `assembly-preview.stl`, for looking at, not printing |
+| `--visor-facets` / `--facet-gap` | 1 / 3 | split the visor into facets; mm between them |
 | `--boss-count` | 2 | locating cones on the pad |
 | `--split-pack` | 1 | 0 keeps the backpack on the body |
 | `--boss` / `--boss-fit` | 6 2 2 / 0.2 | mm, locating cone base/tip/length, clearance |
 | `--simplify-angle` | 2 | deg, coplanar merge limit |
+
+## Visor facets
+
+`astronaut-visor-facets.stl` is the same visor cut into its five facets, each
+turned so its facet lies on the bed — for printing against a textured or
+holographic plate and seeing how the pattern reads on each angle. The five
+pieces sit in a row `facet_gap` apart, roughly 79 mm² of contact each, and
+together they hold the same volume as the whole plug, so the cuts tile it
+exactly. Glue them back into the helmet recess as one, or print the plain
+`astronaut-visor.stl` instead. `--visor-facets 0` skips the file.
 
 ## Checking the fit
 
