@@ -10,8 +10,12 @@ about it is printable as-is. `astronaut.py` drives Blender to fix that:
 
 1. Swings the arms down from the T-pose (`arm_drop`, 35°). The swing is
    rigid, not skinned — the rig's smooth weights tear a 265-triangle
-   shoulder apart. The arm root stays buried in the torso and the remesh
-   welds it back on.
+   shoulder apart. The faces bridging arm to torso are dragged along with it:
+   up top that drag shapes the shoulder and is left alone, but underneath it
+   scoops into a rounded web that makes the arm look pinched. Those
+   downward-facing bridge faces are dropped and the arm's underside is
+   carried on `arm_insert` mm along its own axis into the torso, so the
+   remesh unions a sharp armpit crease instead.
 1. Reproportions it: the body widens (`plump`) and compresses vertically
    (`squash`), while the head scales **uniformly** (`head_scale`) about the
    neck and drops with it. Body and head are treated separately on purpose —
@@ -65,7 +69,7 @@ at the FBX, `--height` scales the figure, and every tuning constant in
 | Flag | Default | Meaning |
 | --- | --- | --- |
 | `--height` | 50 | mm, overall height |
-| `--arm-drop` | 35 | deg, arm swing from the T-pose |
+| `--arm-drop` / `--arm-insert` | 35 / 10 | deg of arm swing; mm the underside carries into the torso |
 | `--min-feature` | 1.6 | mm, thinnest part allowed |
 | `--voxel` | 0.18 | mm, remesh resolution |
 | `--visor-depth` / `--visor-gap` | 3 / 0.15 | mm, plug depth and glue clearance |
