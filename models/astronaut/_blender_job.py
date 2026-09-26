@@ -197,6 +197,14 @@ def visor_cutter(obj, material, depth):
         raise SystemExit(f"no faces use {material}")
     normal = sum(((f.normal * f.calc_area()) for f in bm.faces), mathutils.Vector()).normalized()
 
+    # Keep the raw facets aside: the pocket below is flattened into a prism,
+    # but splitting the plug into facets later needs the faceted surface.
+    faces_only = bpy.data.objects.new("visor_faces", bpy.data.meshes.new("visor_faces"))
+    bpy.context.collection.objects.link(faces_only)
+    snapshot = bm.copy()
+    snapshot.to_mesh(faces_only.data)
+    snapshot.free()
+
     floor = min(v.co.dot(normal) for v in bm.verts) - depth
     for vert in bm.verts:                       # flatten onto the pocket floor
         vert.co -= normal * (vert.co.dot(normal) - floor)
@@ -214,7 +222,7 @@ def visor_cutter(obj, material, depth):
     bm.free()
     log(f"visor pocket: {len(cutter.data.polygons)} tris, floor {depth} mm deep, "
         f"normal {[round(v, 2) for v in normal]}")
-    return cutter, normal
+    return cutter, normal, faces_only
 
 
 def boolean(target, cutter, operation):
@@ -581,6 +589,71 @@ def duplicate_of(obj):
     return copy
 
 
+def facet_prisms(faces_obj, axis, reach):
+    """One prism per visor facet, swept along `axis` so they tile the plug."""
+    bm = bmesh.new()
+    bm.from_mesh(faces_obj.data)
+    prisms = []
+    for face in bm.faces:
+        mesh = bpy.data.meshes.new("facet")
+        prism = bpy.data.objects.new("facet", mesh)
+        bpy.context.collection.objects.link(prism)
+        pm = bmesh.new()
+        verts = [pm.verts.new(v.co - axis * reach / 2) for v in face.verts]
+        pm.faces.new(verts)
+        pm.normal_update()
+        grown = bmesh.ops.extrude_face_region(pm, geom=pm.faces[:])["geom"]
+        for vert in (g for g in grown if isinstance(g, bmesh.types.BMVert)):
+            vert.co += axis * reach
+        bmesh.ops.recalc_face_normals(pm, faces=pm.faces[:])
+        pm.to_mesh(mesh)
+        pm.free()
+        prisms.append((prism, face.normal.copy()))
+    bm.free()
+    log(f"visor facets: {len(prisms)}")
+    return prisms
+
+
+def split_into_facets(plug, prisms, gap):
+    """Cut the visor plug into its facets and lay each one face-down.
+
+    For a test print on a textured bed: whichever facet you want patterned
+    goes against the plate, so each piece is turned to sit on its own.
+    """
+    pieces, offset = [], 0.0
+    for prism, normal in prisms:
+        piece = plug.copy()
+        piece.data = plug.data.copy()
+        bpy.context.collection.objects.link(piece)
+        boolean(piece, prism, "INTERSECT")
+        bpy.data.objects.remove(prism, do_unlink=True)
+        if not piece.data.vertices:
+            bpy.data.objects.remove(piece, do_unlink=True)
+            continue
+        # Rotate the facet's normal onto -Z, i.e. the inverse of the rotation
+        # that would point -Z along the normal.
+        piece.rotation_euler = normal.to_track_quat("-Z", "Y").inverted().to_euler()
+        bpy.ops.object.select_all(action="DESELECT")
+        piece.select_set(True)
+        bpy.context.view_layer.objects.active = piece
+        bpy.ops.object.transform_apply(rotation=True)
+        drop_to_bed(piece)
+        width = piece.dimensions.x
+        piece.location.x = offset + width / 2
+        offset += width + gap
+        pieces.append(piece)
+
+    for piece in pieces:
+        piece.location.x -= offset / 2
+    bpy.ops.object.select_all(action="DESELECT")
+    for piece in pieces:
+        piece.select_set(True)
+    bpy.context.view_layer.objects.active = pieces[0]
+    bpy.ops.object.join()
+    log(f"visor split into {len(pieces)} facets, each face-down, {gap} mm apart")
+    return pieces[0]
+
+
 def face_down(obj, normal):
     """Lay the visor with its outer face on the bed."""
     obj.data.transform(normal.to_track_quat("-Z", "Y").to_matrix().to_4x4().inverted())
@@ -633,7 +706,7 @@ body.scale = [s * scale for s in body.scale]
 bpy.context.view_layer.objects.active = body
 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
-cutter, visor_normal = visor_cutter(body, cfg["visor_material"], cfg["visor_depth"])
+cutter, visor_normal, visor_faces = visor_cutter(body, cfg["visor_material"], cfg["visor_depth"])
 
 pack = None
 if cfg["split_pack"]:
@@ -669,9 +742,17 @@ boolean(body, cutter, "DIFFERENCE")
 bpy.data.objects.remove(cutter, do_unlink=True)
 
 shrink(visor, cfg["visor_gap"])
+
+facets = None
+if cfg["visor_facets"]:
+    prisms = facet_prisms(visor_faces, visor_normal, max(visor.dimensions) * 3)
+    facets = split_into_facets(visor, prisms, cfg["facet_gap"])
+
 face_down(visor, visor_normal)
 
 parts = [(body, "astronaut-body"), (visor, "astronaut-visor")]
+if facets is not None:
+    parts.append((facets, "astronaut-visor-facets"))
 if pack is not None:
     pack.rotation_euler = (math.radians(90), 0, 0)   # aerials along the bed, not standing
     bpy.ops.object.select_all(action="DESELECT")
@@ -685,5 +766,8 @@ for obj, _ in parts:
 
 os.makedirs(cfg["out"], exist_ok=True)
 for obj, name in parts:
-    drop_to_bed(obj)
+    if name.endswith("facets"):
+        obj.data.transform(mathutils.Matrix.Translation((0, 0, -min(v.co.z for v in obj.data.vertices))))
+    else:
+        drop_to_bed(obj)
     export(obj, os.path.join(cfg["out"], f"{name}.stl"))

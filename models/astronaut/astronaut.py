@@ -60,6 +60,8 @@ DEFAULTS = {
     "boss_fit": 0.2,       # mm, clearance on the locating cones
     "simplify_angle": 2.0, # deg, merge coplanar triangles below this angle
     "assembly": 0,         # 1 also writes assembly-preview.stl (not printable)
+    "visor_facets": 1,     # 1 also writes the visor split into its facets, each face-down
+    "facet_gap": 3.0,      # mm between the facets on the plate
 }
 
 
@@ -115,6 +117,17 @@ def verify(out: Path) -> int:
     bad = 0
     for path in sorted(out.glob("*.stl")):
         if path.name.startswith("assembly"):
+            continue
+        if path.stem.endswith("facets"):
+            # Deliberately several separate pieces on one plate.
+            mesh = trimesh.load(path)
+            mesh.merge_vertices()
+            pieces = mesh.split(only_watertight=False)
+            ok = all(p.is_watertight for p in pieces)
+            size = " x ".join(f"{v:.1f}" for v in mesh.extents)
+            print(f"{'ok  ' if ok else 'BAD '} {path.name}: {size} mm, {len(pieces)} loose pieces, "
+                  f"{mesh.volume / 1000:.2f} cm3")
+            bad += not ok
             continue
         mesh = trimesh.load(path)
         mesh.merge_vertices()
