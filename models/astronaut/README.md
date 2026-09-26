@@ -2,7 +2,7 @@
 
 The Unspoken game's astronaut as a three-part printable keyring: white body,
 black visor plug, and a separate backpack that prints lying down. Default
-55 mm tall, with chunkier proportions than the game mesh so it reads as a
+50 mm tall, with chunkier proportions than the game mesh so it reads as a
 keyring rather than a shrunken character.
 
 The source mesh is a rigged, low-poly game asset with open shells, so nothing
@@ -12,8 +12,10 @@ about it is printable as-is. `astronaut.py` drives Blender to fix that:
    rigid, not skinned — the rig's smooth weights tear a 265-triangle
    shoulder apart. The arm root stays buried in the torso and the remesh
    welds it back on.
-1. Fattens the figure (`plump`, 1.18 across against height) and grows the
-   helmet about the neck (`head_scale`, 1.1).
+1. Reproportions it: the body widens (`plump`) and compresses vertically
+   (`squash`), while the head scales **uniformly** (`head_scale`) about the
+   neck and drops with it. Body and head are treated separately on purpose —
+   widening the whole figure turns the helmet into a blob.
 1. Splits the backpack off: the components sitting behind the torso, minus
    the hip pods, which are behind it but far off the centreline. The pack is
    then subtracted from an inflated copy of the body, so its front face
@@ -37,9 +39,9 @@ about it is printable as-is. `astronaut.py` drives Blender to fix that:
 
 | File | Colour | Size | Volume |
 | --- | --- | --- | --- |
-| `astronaut-body.stl` | white | 39.7 × 25.3 × 54.9 | 16.0 cm³ |
-| `astronaut-visor.stl` | black | 25.3 × 20.6 × 10.6 | 1.1 cm³ |
-| `astronaut-backpack.stl` | white | 19.4 × 31.2 × 13.5 | 2.9 cm³ |
+| `astronaut-body.stl` | white | 36.4 × 21.7 × 49.9 | 11.6 cm³ |
+| `astronaut-visor.stl` | black | 22.0 × 21.0 × 9.6 | 0.9 cm³ |
+| `astronaut-backpack.stl` | white | 17.8 × 25.9 × 12.4 | 2.1 cm³ |
 
 The soles are two flat patches totalling ~93 mm², so it stands unaided and
 sticks to the bed without a brim.
@@ -62,12 +64,13 @@ at the FBX, `--height` scales the figure, and every tuning constant in
 
 | Flag | Default | Meaning |
 | --- | --- | --- |
-| `--height` | 55 | mm, overall height |
+| `--height` | 50 | mm, overall height |
 | `--arm-drop` | 35 | deg, arm swing from the T-pose |
 | `--min-feature` | 1.6 | mm, thinnest part allowed |
 | `--voxel` | 0.18 | mm, remesh resolution |
 | `--visor-depth` / `--visor-gap` | 3 / 0.15 | mm, plug depth and glue clearance |
-| `--plump` / `--head-scale` | 1.18 / 1.1 | widen against height; helmet scale |
+| `--plump` / `--squash` | 1.15 / 0.88 | body only: wider across, shorter |
+| `--head-scale` | 1.2 | helmet, uniform about the neck |
 | `--foot-trim` | 1.0 | mm shaved off the soles |
 | `--keyring-dia` / `--keyring-margin` | 4 / 3.5 | mm, bore and solid helmet above it |
 | `--keyring-stretch` / `--keyring-cone` | 1.7 / 1 | slot stretch downward; mouth lead-in |
@@ -115,4 +118,6 @@ v1 printed at 55 mm: good, but the 3.5 mm round bore was a 16 mm tunnel no
 keyring could curve through, the figure read too tall, and the upright
 aerials were delicate. v2 answers all three: keyring slot, plumper
 proportions with a bigger head, and the backpack split off to print flat.
-v3 flattens the soles. Not yet printed.
+v3 flattens the soles. v4 shrinks it to 50 mm and
+fixes the helmet, which v2 had squashed by widening the whole figure: body
+and head are now reproportioned separately. Not yet printed.

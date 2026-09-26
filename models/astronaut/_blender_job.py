@@ -72,22 +72,41 @@ def rotate_arms(obj, drop):
         log(f"arm {side}: rotated {moved} verts by {drop * sign:+.0f} deg")
 
 
-def scale_head(obj, factor):
-    """Grow the helmet about the neck — game-camera proportions, i.e. cuter."""
-    if factor == 1.0:
-        return
+def reproportion(obj, plump, squash, head_scale):
+    """Chibi proportions: squat body, bigger head, head shape untouched.
+
+    Widening and squashing the whole figure deforms the helmet into a blob, so
+    the two are separated. Body vertices widen across and compress vertically;
+    head vertices scale uniformly about the neck, then drop with it, so the
+    helmet keeps its shape and just grows against a shorter body.
+    """
     armature = bpy.data.objects["Armature"]
     to_world, to_local = obj.matrix_world, obj.matrix_world.inverted()
     group = obj.vertex_groups["Head"].index
-    pivot = armature.matrix_world @ armature.data.bones["Head"].head_local
-    moved = 0
-    for vert in obj.data.vertices:
-        if sum(g.weight for g in vert.groups if g.group == group) < 0.5:
-            continue
-        world = to_world @ vert.co
-        vert.co = to_local @ (pivot + (world - pivot) * factor)
-        moved += 1
-    log(f"head: scaled {moved} verts by {factor}")
+    world = [to_world @ v.co for v in obj.data.vertices]
+    floor = min(p.z for p in world)
+    centre = mathutils.Vector((
+        (max(p.x for p in world) + min(p.x for p in world)) / 2,
+        (max(p.y for p in world) + min(p.y for p in world)) / 2,
+        0,
+    ))
+    neck = armature.matrix_world @ armature.data.bones["Head"].head_local
+    drop = (floor + (neck.z - floor) * squash) - neck.z
+
+    heads = 0
+    for vert, point in zip(obj.data.vertices, world):
+        if sum(g.weight for g in vert.groups if g.group == group) >= 0.5:
+            moved = neck + (point - neck) * head_scale
+            moved.z += drop
+            heads += 1
+        else:
+            moved = mathutils.Vector((
+                centre.x + (point.x - centre.x) * plump,
+                centre.y + (point.y - centre.y) * plump,
+                floor + (point.z - floor) * squash,
+            ))
+        vert.co = to_local @ moved
+    log(f"proportions: body x{plump} wide, x{squash} tall; head x{head_scale} ({heads} verts)")
 
 
 def fatten_thin_parts(obj, min_feature):
@@ -422,15 +441,14 @@ bpy.ops.import_scene.fbx(filepath=cfg["src"])
 body = mesh_object()
 
 rotate_arms(body, cfg["arm_drop"])
-scale_head(body, cfg["head_scale"])
+reproportion(body, cfg["plump"], cfg["squash"], cfg["head_scale"])
 for mod in list(body.modifiers):          # drop the armature, the pose is baked in
     body.modifiers.remove(mod)
 bpy.data.objects.remove(bpy.data.objects["Armature"], do_unlink=True)
 
 bpy.context.view_layer.update()
 scale = (cfg["height"] + cfg["foot_trim"]) / body.dimensions.z   # trim comes off later
-plump = cfg["plump"]
-body.scale = [body.scale[0] * scale * plump, body.scale[1] * scale * plump, body.scale[2] * scale]
+body.scale = [s * scale for s in body.scale]
 bpy.context.view_layer.objects.active = body
 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
