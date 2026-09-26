@@ -11,7 +11,9 @@ header line exports one file per part, passing `-D part="<name>"`.
 Python generators (`models/<slug>/<name>.py`) run with `uv run <file> <outdir>`
 and must write their own files into `<outdir>`.
 
-Files whose name starts with `_` are treated as includes and skipped.
+Files whose name starts with `_` are treated as includes and skipped, as are
+generators carrying a `build: manual` comment (they need tools or inputs that
+are not available everywhere, e.g. Blender and another repo's assets).
 """
 
 from __future__ import annotations
@@ -29,6 +31,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MODELS = ROOT / "models"
 OUT = ROOT / "out"
 PARTS_RE = re.compile(r"^\s*//\s*parts:\s*(.+)$", re.MULTILINE)
+MANUAL_RE = re.compile(r"^#\s*build:\s*manual\b", re.MULTILINE)
 
 
 @dataclass(frozen=True)
@@ -41,11 +44,15 @@ class Job:
         return f"{self.source.stem}-{self.part}" if self.part else self.source.stem
 
 
+def is_manual(path: Path) -> bool:
+    return path.suffix == ".py" and bool(MANUAL_RE.search(path.read_text()))
+
+
 def discover(selected: list[str]) -> list[Path]:
     sources = sorted(
         p
         for p in MODELS.rglob("*")
-        if p.suffix in {".scad", ".py"} and not p.name.startswith("_")
+        if p.suffix in {".scad", ".py"} and not p.name.startswith("_") and not is_manual(p)
     )
     if not selected:
         return sources
@@ -60,7 +67,9 @@ def discover(selected: list[str]) -> list[Path]:
         )
     ]
     if not picked:
-        sys.exit(f"no models match: {', '.join(selected)}")
+        manual = [p for p in MODELS.rglob("*.py") if is_manual(p)]
+        hint = f" (manual generators, run directly: {', '.join(str(p) for p in manual)})" if manual else ""
+        sys.exit(f"no models match: {', '.join(selected)}{hint}")
     return picked
 
 
