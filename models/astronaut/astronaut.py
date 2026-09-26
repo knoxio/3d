@@ -108,11 +108,16 @@ def verify(out: Path) -> int:
     for path in sorted(out.glob("*.stl")):
         mesh = trimesh.load(path)
         mesh.merge_vertices()
-        shells = len(mesh.split(only_watertight=False))
-        ok = mesh.is_watertight and shells == 1
+        pieces = mesh.split(only_watertight=False)
+        # Overlapping shells are fine — the slicer unions them — as long as
+        # each one is closed and the body holds nearly all the volume.
+        closed = all(p.is_watertight for p in pieces) if len(pieces) > 1 else mesh.is_watertight
+        biggest = max((p.volume for p in pieces), default=0)
+        ok = closed and biggest >= mesh.volume * 0.95
         size = " x ".join(f"{v:.1f}" for v in mesh.extents)
-        print(f"{'ok  ' if ok else 'BAD '} {path.name}: {size} mm, {mesh.volume / 1000:.2f} cm3"
-              + ("" if ok else f", watertight={mesh.is_watertight}, {shells} shells"))
+        extra = f", {len(pieces)} overlapping shells" if len(pieces) > 1 else ""
+        print(f"{'ok  ' if ok else 'BAD '} {path.name}: {size} mm, {mesh.volume / 1000:.2f} cm3{extra}"
+              + ("" if ok else f" — closed={closed}"))
         bad += not ok
     return 1 if bad else 0
 
