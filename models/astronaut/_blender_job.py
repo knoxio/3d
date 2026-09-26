@@ -61,14 +61,16 @@ def rotate_arms(obj, drop, insert):
     """Rigidly swing each arm down about its shoulder, with a crisp armpit.
 
     The rig's smooth skinning tears a 265-triangle shoulder apart, so the arm
-    moves as one solid piece. The faces bridging arm to torso — the sleeve —
-    are deleted rather than dragged along, because dragging them smears the
-    armpit into a soft web. The arm's open root is then extruded straight into
-    the torso, keeping its full cross-section, and the remesh unions the two
-    into a sharp crease.
+    moves as one solid piece, dragging the faces that bridge it to the torso.
+    Up top that drag is what shapes the shoulder and is left alone. Underneath
+    it scoops into a rounded web that makes the arm look pinched, so those
+    downward-facing bridge faces are dropped and the arm's underside is
+    extruded straight on along its own axis into the torso, giving the remesh
+    a sharp crease to union.
     """
     armature = bpy.data.objects["Armature"]
     to_world, to_local = obj.matrix_world, obj.matrix_world.inverted()
+    normal_to_world = obj.matrix_world.to_3x3()
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     weights = bm.verts.layers.deform.active
@@ -77,27 +79,27 @@ def rotate_arms(obj, drop, insert):
         groups = [obj.vertex_groups[f"Arm_{n}_{side}"].index for n in (1, 2)]
         pivot = armature.matrix_world @ armature.data.bones[f"Arm_1_{side}"].head_local
         arm = {v for v in bm.verts if sum(v[weights].get(g, 0) for g in groups) >= 0.5}
-        sleeve = [f for f in bm.faces if 0 < sum(v in arm for v in f.verts) < len(f.verts)]
-        bmesh.ops.delete(bm, geom=sleeve, context="FACES_ONLY")   # keep the verts we still refer to
-
-        ring = [e for e in bm.edges if len(e.link_faces) == 1 and all(v in arm for v in e.verts)]
-        if not ring:
-            raise SystemExit(f"no open root ring on the {side} arm")
-        centre = sum(((to_world @ v.co) for e in ring for v in e.verts), mathutils.Vector())
-        centre /= 2 * len(ring)
-        inward = (pivot - centre)
-        inward = inward.normalized() if inward.length > 1e-6 else mathutils.Vector((0, 0, -1))
-
-        grown = bmesh.ops.extrude_edge_only(bm, edges=ring)["geom"]
-        new_verts = [g for g in grown if isinstance(g, bmesh.types.BMVert)]
-        for vert in new_verts:
-            vert.co = to_local @ ((to_world @ vert.co) + inward * insert)
-        arm |= set(new_verts)
 
         rot = mathutils.Matrix.Rotation(math.radians(drop) * sign, 4, "Y")
         for vert in arm:
             vert.co = to_local @ (rot @ ((to_world @ vert.co) - pivot) + pivot)
-        log(f"arm {side}: {len(arm)} verts, root extruded {insert} mm in, {drop * sign:+.0f} deg")
+
+        bm.normal_update()
+        sleeve = [f for f in bm.faces if 0 < sum(v in arm for v in f.verts) < len(f.verts)]
+        underside = [f for f in sleeve if (normal_to_world @ f.normal).z < 0]
+        bmesh.ops.delete(bm, geom=underside, context="FACES_ONLY")
+
+        tip = max((to_world @ v.co for v in arm), key=lambda p: (p - pivot).length)
+        inward = (pivot - tip).normalized()
+        ring = [e for e in bm.edges if len(e.link_faces) == 1 and all(v in arm for v in e.verts)]
+        moved = 0
+        if ring:
+            grown = bmesh.ops.extrude_edge_only(bm, edges=ring)["geom"]
+            for vert in (g for g in grown if isinstance(g, bmesh.types.BMVert)):
+                vert.co = to_local @ ((to_world @ vert.co) + inward * insert)
+                moved += 1
+        log(f"arm {side}: {drop * sign:+.0f} deg, {len(underside)}/{len(sleeve)} bridge faces "
+            f"re-cut, underside carried {insert} mm in on {moved} verts")
 
     left = cap_holes(bm)
     bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
