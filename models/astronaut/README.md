@@ -31,7 +31,7 @@ about it is printable as-is. `astronaut.py` drives Blender to fix that:
 3. Voxel-remeshes to one watertight solid, closing the open shells.
 4. Flattens where the backpack meets the torso: a pad sunk `pad_depth` into
    the back, the pack cut off flat to match with `boss_fit` of glue gap, and
-   two locating cones. A pack moulded to the torso has a hollow in its face
+   two locating cones on the pad with sockets in the pack. A pack moulded to the torso has a hollow in its face
    that prints badly, and the cut also takes the aerials' forward lean off,
    so the whole part lies down on the bed.
 5. Shaves `foot_trim` off the soles so it stands flat — the game feet taper
@@ -71,7 +71,10 @@ close, and boolean unions over them come out hollow.
 The soles are two flat patches totalling ~93 mm², so it stands unaided and
 sticks to the bed without a brim.
 
-All three are single watertight solids sitting on Z = 0 in print orientation:
+All three sit on Z = 0 in print orientation and are closed solids. The body
+exports as a few overlapping closed shells — the locating cones do not merge
+into the torso mesh, and a slicer unions them, so this is checked for rather
+than fixed. Orientation:
 the body standing, the visor face-down, the backpack on its mating face with
 the aerials running along the bed.
 
@@ -81,8 +84,8 @@ the aerials running along the bed.
 uv run --script models/astronaut/astronaut.py out/astronaut
 ```
 
-Every part is checked after export: a part that is not a single watertight
-solid fails the run. Marked `build: manual`, so `mise run build` and CI skip it — it needs Blender
+Every part is checked after export: each shell must be closed and the main
+one must hold at least 95 % of the volume, or the run fails. Marked `build: manual`, so `mise run build` and CI skip it — it needs Blender
 (`brew install --cask blender`) and the game repo checked out. `--src` points
 at the FBX, `--height` scales the figure, and every tuning constant in
 `DEFAULTS` has a matching flag.

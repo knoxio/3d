@@ -269,11 +269,15 @@ def clean(obj):
         bmesh.ops.delete(bm, geom=flat, context="FACES")
         log(f"dropped {len(flat)} zero-area faces from {obj.name}")
     bmesh.ops.holes_fill(bm, edges=[e for e in bm.edges if len(e.link_faces) == 1])
+    # Drop only genuinely degenerate shells. Dropping everything but the
+    # largest also took out the backpack's locating cones: the boolean union
+    # leaves those as their own shells, overlapping the body.
     groups = components(bm)
-    slivers = sorted(groups, key=lambda g: sum(f.calc_area() for f in g))[:-1]
+    slivers = [g for g in groups if sum(f.calc_area() for f in g) < 1.0]
     if slivers:
+        areas = [round(sum(f.calc_area() for f in g), 3) for g in slivers]
         bmesh.ops.delete(bm, geom=[f for g in slivers for f in g], context="FACES")
-        log(f"dropped {len(slivers)} sliver shells from {obj.name}")
+        log(f"dropped {len(slivers)} sliver shells from {obj.name}: areas {areas}")
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     # filled holes can be non-planar n-gons, which the STL writer chops into
     # slivers — triangulate here so the exporter has nothing left to decide
@@ -447,7 +451,10 @@ def flat_pad(body, pack, gap, depth):
     shaver.scale = (x1 - x0, size, body_top - z0)
     shaver.location = ((x0 + x1) / 2, pad_y + size / 2, (z0 + body_top) / 2)
     bpy.ops.object.transform_apply(location=True, scale=True)
+    before = len(body.data.polygons)
     boolean(body, shaver, "DIFFERENCE")          # shave the torso back to the plane
+    log(f"DBG shaver scale {tuple(round(v,2) for v in shaver.dimensions)} at y {pad_y:.2f}; "
+        f"body tris {before} -> {len(body.data.polygons)}")
     bpy.data.objects.remove(shaver, do_unlink=True)
 
     # Cut the pack off flat to match, across the whole part: the aerials lean
@@ -473,13 +480,18 @@ def locating_cones(body, pack, pad_y, top, boss, fit, count):
     spots = [lo + (hi - lo) * f for f in ([0.5] if count < 2 else [0.25, 0.75])]
     for cz in spots:
         for obj, operation, grow in ((body, "UNION", 0.0), (pack, "DIFFERENCE", fit)):
-            bpy.ops.mesh.primitive_cone_add(
-                radius1=base / 2 + grow, radius2=tip / 2 + grow, depth=length + 1,
-                location=(cx, pad_y + (length + 1) / 2 - 1, cz),
+            bury = 3.0      # a deeper overlap: a barely-touching cone leaves
+            bpy.ops.mesh.primitive_cone_add(      # its own shell behind
+                radius1=base / 2 + grow, radius2=tip / 2 + grow, depth=length + bury,
+                location=(cx, pad_y + (length - bury) / 2, cz),
                 rotation=(math.radians(-90), 0, 0),
             )
             cone = bpy.context.active_object
+            if obj is body:
+                was = len(obj.data.polygons)
             boolean(obj, cone, operation)
+            if obj is body:
+                log(f"DBG cone at z={cz:.1f}: body tris {was} -> {len(obj.data.polygons)}")
             bpy.data.objects.remove(cone, do_unlink=True)
     log(f"{len(spots)} locating cones {base}->{tip} at x={cx:.1f}, z={[round(s, 1) for s in spots]}")
 
@@ -554,6 +566,7 @@ if pack is not None:
     pad_y, pad_top = flat_pad(body, pack, cfg["boss_fit"], cfg["pad_depth"])
     locating_cones(body, pack, pad_y, pad_top, cfg["boss"], cfg["boss_fit"], cfg["boss_count"])
 
+
 visor = body.copy()
 visor.data = body.data.copy()
 bpy.context.collection.objects.link(visor)
@@ -561,6 +574,7 @@ visor.name = "visor"
 boolean(visor, cutter, "INTERSECT")
 boolean(body, cutter, "DIFFERENCE")
 bpy.data.objects.remove(cutter, do_unlink=True)
+
 shrink(visor, cfg["visor_gap"])
 face_down(visor, visor_normal)
 
