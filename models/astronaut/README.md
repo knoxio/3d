@@ -39,6 +39,15 @@ about it is printable as-is. `astronaut.py` drives Blender to fix that:
 7. Decimates coplanar triangles and triangulates before export, so the STL is
    a few MB rather than 20.
 
+The weld is a voxel remesh, which resamples every flat facet onto a grid and
+leaves the silhouette edges stair-stepped by about half a voxel. At 0.12 mm
+that is ±0.06 mm — well under a 0.4 mm nozzle and 0.2 mm layers, so it cannot
+print, but it is visible in a slicer at high zoom. Finer voxels are
+impractical: 0.08 mm takes over ten minutes, and each halving is ~8x the
+work. Welding with exact booleans instead would keep the facets perfectly
+flat, but the source has open shells (the collar among them) that will not
+close, and boolean unions over them come out hollow.
+
 ## Parts
 
 | File | Colour | Size | Volume |
@@ -71,7 +80,7 @@ at the FBX, `--height` scales the figure, and every tuning constant in
 | `--height` | 50 | mm, overall height |
 | `--arm-drop` / `--arm-insert` | 35 / 10 | deg of arm swing; mm the underside carries into the torso |
 | `--min-feature` | 1.6 | mm, thinnest part allowed |
-| `--voxel` | 0.18 | mm, remesh resolution |
+| `--voxel` | 0.12 | mm, remesh resolution — and the size of the facet stair-stepping |
 | `--visor-depth` / `--visor-gap` | 3 / 0.15 | mm, plug depth and glue clearance |
 | `--plump` / `--squash` | 1.15 / 0.88 | body only: wider across, shorter |
 | `--head-scale` | 1.2 | helmet, uniform about the neck |

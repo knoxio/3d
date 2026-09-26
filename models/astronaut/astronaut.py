@@ -39,7 +39,7 @@ DEFAULTS = {
     "arm_drop": 35.0,      # deg, how far the arms swing down from the T-pose
     "arm_insert": 10.0,    # mm the arm underside is carried on into the torso
     "min_feature": 1.6,    # mm, thinnest part allowed (the aerials get widened to this)
-    "voxel": 0.18,         # mm, remesh resolution
+    "voxel": 0.12,         # mm, remesh resolution — also the size of the facet stair-stepping
     "visor_material": "Player_Helm",
     "visor_depth": 3.0,    # mm, how deep the visor plug sits in the helmet
     "visor_gap": 0.15,     # mm, clearance around the plug for glue
