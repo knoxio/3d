@@ -35,15 +35,16 @@ DEFAULT_SRC = Path.home() / (
 )
 
 DEFAULTS = {
-    "height": 55.0,        # mm, overall figure height
+    "height": 50.0,        # mm, overall figure height
     "arm_drop": 35.0,      # deg, how far the arms swing down from the T-pose
     "min_feature": 1.6,    # mm, thinnest part allowed (the aerials get widened to this)
     "voxel": 0.18,         # mm, remesh resolution
     "visor_material": "Player_Helm",
     "visor_depth": 3.0,    # mm, how deep the visor plug sits in the helmet
     "visor_gap": 0.15,     # mm, clearance around the plug for glue
-    "plump": 1.18,         # widen X/Y against height — game-camera proportions
-    "head_scale": 1.1,     # helmet scale about the neck
+    "plump": 1.15,         # body only: widen across
+    "squash": 0.88,        # body only: compress vertically
+    "head_scale": 1.2,     # helmet, scaled uniformly about the neck
     "foot_trim": 1.0,      # mm shaved off the soles so it stands flat
     "keyring_dia": 4.0,    # mm
     "keyring_margin": 3.5, # mm of solid helmet above the hole
@@ -87,7 +88,8 @@ def main() -> int:
         if line.startswith("JOB:"):
             print(line[5:])
     # Blender exits 0 even when the script raises, so check the output too
-    if "Traceback (most recent call last)" in result.stdout + result.stderr:
+    output = result.stdout + result.stderr
+    if result.returncode != 0 or "Error" in output or "Traceback" in output:
         print(result.stdout[-2000:], file=sys.stderr)
         print(result.stderr[-2000:], file=sys.stderr)
         return 1
