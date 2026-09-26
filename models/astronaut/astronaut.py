@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["trimesh", "networkx"]
+# dependencies = ["trimesh", "networkx", "rtree", "scipy"]
 # ///
 # build: manual — needs Blender and the game repo, so CI skips it.
 """Turn the Unspoken game's astronaut into a printable two-part keyring.
@@ -101,22 +101,39 @@ def main() -> int:
 
 
 def verify(out: Path) -> int:
-    """Every part must come out a single watertight solid, or this failed."""
+    """Check each part, and drop any shell that is not joined to it.
+
+    A boolean union can leave a feature — the backpack's locating cones — as
+    its own shell overlapping the part, which slicers union happily. A cut can
+    also shear a corner off and leave it floating nearby, which slicers print
+    as debris. The two look alike in a mesh: the difference is whether the
+    shell overlaps the part at all.
+    """
     import trimesh
 
     bad = 0
     for path in sorted(out.glob("*.stl")):
         mesh = trimesh.load(path)
         mesh.merge_vertices()
-        pieces = mesh.split(only_watertight=False)
-        # Overlapping shells are fine — the slicer unions them — as long as
-        # each one is closed and the body holds nearly all the volume.
-        closed = all(p.is_watertight for p in pieces) if len(pieces) > 1 else mesh.is_watertight
-        biggest = max((p.volume for p in pieces), default=0)
-        ok = closed and biggest >= mesh.volume * 0.95
+        pieces = sorted(mesh.split(only_watertight=False), key=lambda p: -p.volume)
+        main, rest = pieces[0], pieces[1:]
+
+        keep, strays = [main], []
+        for piece in rest:
+            (keep if main.contains(piece.vertices).any() else strays).append(piece)
+        if strays:
+            mesh = trimesh.util.concatenate(keep)
+            mesh.export(path)
+            print(f"     dropped {len(strays)} loose fragment(s) from {path.name}: "
+                  + ", ".join(f"{p.volume:.0f} mm3 at "
+                              f"({p.centroid[0]:.0f}, {p.centroid[1]:.0f}, {p.centroid[2]:.0f})"
+                              for p in strays))
+
+        closed = all(p.is_watertight for p in keep)
+        ok = closed and main.volume >= mesh.volume * 0.95
         size = " x ".join(f"{v:.1f}" for v in mesh.extents)
-        extra = f", {len(pieces)} overlapping shells" if len(pieces) > 1 else ""
-        print(f"{'ok  ' if ok else 'BAD '} {path.name}: {size} mm, {mesh.volume / 1000:.2f} cm3{extra}"
+        joined = f", {len(keep)} joined shells" if len(keep) > 1 else ""
+        print(f"{'ok  ' if ok else 'BAD '} {path.name}: {size} mm, {mesh.volume / 1000:.2f} cm3{joined}"
               + ("" if ok else f" — closed={closed}"))
         bad += not ok
     return 1 if bad else 0

@@ -446,15 +446,16 @@ def flat_pad(body, pack, gap, depth):
     pad_y = max(p.y for p in inside) - depth     # sunk in, or nothing gets flattened
 
     size = max(body.dimensions) * 4
+    # Shave a touch wider than the pack, or the unshaved strips at the pad's
+    # edges hold the pack off the torso. Corners this shears off the arm roots
+    # come away as loose shells, which the export check drops.
+    inset = -1.0
     bpy.ops.mesh.primitive_cube_add(size=1)
     shaver = bpy.context.active_object
-    shaver.scale = (x1 - x0, size, body_top - z0)
+    shaver.scale = (x1 - x0 - 2 * inset, size, body_top - z0)
     shaver.location = ((x0 + x1) / 2, pad_y + size / 2, (z0 + body_top) / 2)
     bpy.ops.object.transform_apply(location=True, scale=True)
-    before = len(body.data.polygons)
     boolean(body, shaver, "DIFFERENCE")          # shave the torso back to the plane
-    log(f"DBG shaver scale {tuple(round(v,2) for v in shaver.dimensions)} at y {pad_y:.2f}; "
-        f"body tris {before} -> {len(body.data.polygons)}")
     bpy.data.objects.remove(shaver, do_unlink=True)
 
     # Cut the pack off flat to match, across the whole part: the aerials lean
@@ -467,33 +468,111 @@ def flat_pad(body, pack, gap, depth):
 
     log(f"flat pad {x1 - x0:.0f} x {body_top - z0:.0f} mm at y={pad_y:.1f}, {depth} mm deep, "
         f"{gap} mm glue gap")
-    return pad_y, body_top
+    return pad_y, (z0, body_top)
 
 
-def locating_cones(body, pack, pad_y, top, boss, fit, count):
+def boss_parts(cx, pad_y, cz, base, tip, length, grow):
+    """The two solids that make one locating boss.
+
+    A shank buried in the torso — which falls away behind the pad, so a boss
+    that only just dips in floats free — and the cone that stands proud of the
+    pad by `length`. Keeping them separate fixes the cone's size at the pad
+    no matter how deep the shank reaches.
+    """
+    bury = 8.0
+    bpy.ops.mesh.primitive_cylinder_add(
+        radius=base / 2 + grow, depth=bury,
+        location=(cx, pad_y - bury / 2, cz), rotation=(math.radians(90), 0, 0),
+    )
+    shank = bpy.context.active_object
+    bpy.ops.mesh.primitive_cone_add(
+        radius1=base / 2 + grow, radius2=tip / 2 + grow, depth=length,
+        location=(cx, pad_y + length / 2, cz), rotation=(math.radians(-90), 0, 0),
+    )
+    return shank, bpy.context.active_object
+
+
+def locating_cones(body, pack, pad_y, pad_z, boss, fit, count):
     """Cones on the pad, sockets in the pack: one to locate, two to stop it
     turning and to give the glue joint something to grip top and bottom."""
     verts = pack.data.vertices
     cx = (max(v.co.x for v in verts) + min(v.co.x for v in verts)) / 2
-    lo, hi = min(v.co.z for v in verts), top      # the flat part only, not the aerials
     base, tip, length = boss
-    spots = [lo + (hi - lo) * f for f in ([0.5] if count < 2 else [0.25, 0.75])]
+    base_r = base / 2
+    lo, hi = pad_z[0] + base_r + 1, pad_z[1] - base_r - 1   # wholly on the pad
+    if hi <= lo:
+        raise SystemExit("pad too small for a locating cone")
+    spots = [lo + (hi - lo) * f for f in ([0.5] if count < 2 else [0.0, 1.0])]
+
     for cz in spots:
         for obj, operation, grow in ((body, "UNION", 0.0), (pack, "DIFFERENCE", fit)):
-            bury = 3.0      # a deeper overlap: a barely-touching cone leaves
-            bpy.ops.mesh.primitive_cone_add(      # its own shell behind
-                radius1=base / 2 + grow, radius2=tip / 2 + grow, depth=length + bury,
-                location=(cx, pad_y + (length - bury) / 2, cz),
+            for solid in boss_parts(cx, pad_y, cz, base, tip, length, grow):
+                boolean(obj, solid, operation)
+                bpy.data.objects.remove(solid, do_unlink=True)
+    log(f"{len(spots)} locating cones {base}->{tip} over {length} mm at x={cx:.1f}, "
+        f"z={[round(s, 1) for s in spots]}")
+    return [(cx, cz) for cz in spots]
+
+
+def volume_of(obj):
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    v = bm.calc_volume(signed=False)
+    bm.free()
+    return v
+
+
+def probe(target, maker, operation):
+    """Volume of `target` booleaned against a freshly made probe solid."""
+    test = target.copy()
+    test.data = target.data.copy()
+    bpy.context.collection.objects.link(test)
+    cutter = maker()
+    boolean(test, cutter, operation)
+    volume = volume_of(test)
+    bpy.data.objects.remove(cutter, do_unlink=True)
+    bpy.data.objects.remove(test, do_unlink=True)
+    return volume
+
+
+def check_joint(body, pack, pad_y, spots, boss, fit):
+    """Prove the cones and sockets line up before anything is exported.
+
+    Checks three things in the assembled position: the pack does not foul the
+    torso, each cone is solid on the body, and the pack is hollow exactly
+    where that cone sits.
+    """
+    base, tip, length = boss
+    clash = probe(pack, lambda: duplicate_of(body), "INTERSECT")
+    if clash > 1.0:
+        raise SystemExit(f"backpack fouls the torso by {clash:.1f} mm3")
+
+    for cx, cz in spots:
+        def cone():
+            bpy.ops.mesh.primitive_cone_add(
+                radius1=base / 2, radius2=tip / 2, depth=length,
+                location=(cx, pad_y + length / 2, cz),
                 rotation=(math.radians(-90), 0, 0),
             )
-            cone = bpy.context.active_object
-            if obj is body:
-                was = len(obj.data.polygons)
-            boolean(obj, cone, operation)
-            if obj is body:
-                log(f"DBG cone at z={cz:.1f}: body tris {was} -> {len(obj.data.polygons)}")
-            bpy.data.objects.remove(cone, do_unlink=True)
-    log(f"{len(spots)} locating cones {base}->{tip} at x={cx:.1f}, z={[round(s, 1) for s in spots]}")
+            return bpy.context.active_object
+
+        nominal = math.pi * length / 3 * ((base / 2) ** 2 + (base / 2) * (tip / 2) + (tip / 2) ** 2)
+        on_body = probe(body, cone, "INTERSECT")
+        in_pack = probe(pack, cone, "INTERSECT")
+        if on_body < nominal * 0.8:
+            raise SystemExit(f"cone at z={cz:.1f} is only {on_body:.0f} of {nominal:.0f} mm3 on the body")
+        if in_pack > nominal * 0.05:
+            raise SystemExit(f"backpack socket at z={cz:.1f} is blocked: {in_pack:.0f} mm3 of material")
+        log(f"joint at z={cz:.1f}: cone {on_body:.0f}/{nominal:.0f} mm3 solid, socket clear "
+            f"({in_pack:.1f} mm3), clearance {fit} mm")
+    log(f"backpack sits clear of the torso ({clash:.2f} mm3 overlap)")
+
+
+def duplicate_of(obj):
+    copy = obj.copy()
+    copy.data = obj.data.copy()
+    bpy.context.collection.objects.link(copy)
+    return copy
 
 
 def face_down(obj, normal):
@@ -563,8 +642,9 @@ keyring_hole(body, cfg["keyring_dia"], cfg["keyring_margin"], cfg["keyring_back"
              cfg["keyring_stretch"], cfg["keyring_cone"])
 
 if pack is not None:
-    pad_y, pad_top = flat_pad(body, pack, cfg["boss_fit"], cfg["pad_depth"])
-    locating_cones(body, pack, pad_y, pad_top, cfg["boss"], cfg["boss_fit"], cfg["boss_count"])
+    pad_y, pad_z = flat_pad(body, pack, cfg["boss_fit"], cfg["pad_depth"])
+    spots = locating_cones(body, pack, pad_y, pad_z, cfg["boss"], cfg["boss_fit"], cfg["boss_count"])
+    check_joint(body, pack, pad_y, spots, cfg["boss"], cfg["boss_fit"])
 
 
 visor = body.copy()
