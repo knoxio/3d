@@ -10,12 +10,13 @@ about it is printable as-is. `astronaut.py` drives Blender to fix that:
 
 1. Swings the arms down from the T-pose (`arm_drop`, 35°). The swing is
    rigid, not skinned — the rig's smooth weights tear a 265-triangle
-   shoulder apart. The faces bridging arm to torso are dragged along with it:
-   up top that drag shapes the shoulder and is left alone, but underneath it
-   scoops into a rounded web that makes the arm look pinched. Those
-   downward-facing bridge faces are dropped and the arm's underside is
-   carried on `arm_insert` mm along its own axis into the torso, so the
-   remesh unions a sharp armpit crease instead.
+   shoulder apart. The faces bridging arm to torso are dragged along with it,
+   which is what shapes the shoulder, but underneath they sag into a rounded
+   web that makes the arm look pinched. Nothing is cut away — cutting leaves
+   slots and holes at the back, where the arm genuinely stands off the torso.
+   Instead the arm's own underside faces are extended `arm_insert` mm into
+   the torso as a slab, filling the hollow, so the weld reads as a sharp
+   armpit crease.
 1. Reproportions it: the body widens (`plump`) and compresses vertically
    (`squash`), while the head scales **uniformly** (`head_scale`) about the
    neck and drops with it. Body and head are treated separately on purpose —
@@ -78,7 +79,7 @@ at the FBX, `--height` scales the figure, and every tuning constant in
 | Flag | Default | Meaning |
 | --- | --- | --- |
 | `--height` | 50 | mm, overall height |
-| `--arm-drop` / `--arm-insert` | 35 / 10 | deg of arm swing; mm the underside carries into the torso |
+| `--arm-drop` / `--arm-insert` | 35 / 10 | deg of arm swing; mm the underside slab reaches into the torso |
 | `--min-feature` | 1.6 | mm, thinnest part allowed |
 | `--voxel` | 0.12 | mm, remesh resolution — and the size of the facet stair-stepping |
 | `--visor-depth` / `--visor-gap` | 3 / 0.15 | mm, plug depth and glue clearance |
