@@ -47,9 +47,9 @@ DEFAULTS = {
     "squash": 0.88,        # body only: compress vertically
     "head_scale": 1.2,     # helmet, scaled uniformly about the neck
     "foot_trim": 1.0,      # mm shaved off the soles so it stands flat
-    "keyring_margin": 2.0, # mm of solid helmet above the hole
-    "keyring_back": 1.5,   # mm behind the helmet centre, before the visor clearance
-    "keyring_cone": 1.5,   # mm, funnel at each mouth
+    "keyring_margin": 1.5, # mm of solid helmet above the hole
+    "keyring_back": 1.0,   # mm further back, after the visor clearance
+    "keyring_cone": 0.0,   # mm, funnel at each mouth; 0 = a plain tube
     "split_pack": 1,       # 1 = backpack as its own part, printed lying down
     "pack_tol": 1.5,       # mm, how far in front of the torso's back a pack lump may start
     "pack_centre_frac": 0.3,  # of half-width: how far off centre a pack lump may sit

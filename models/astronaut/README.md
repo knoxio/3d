@@ -115,9 +115,9 @@ at the FBX, `--height` scales the figure, and every tuning constant in
 | `--head-scale` | 1.2 | helmet, uniform about the neck |
 | `--foot-trim` | 1.0 | mm shaved off the soles |
 | `--keyring-slot` | 6 6 | mm, hole front-to-back and vertically |
-| `--keyring-margin` | 2 | mm of helmet above the hole, from the local surface |
-| `--keyring-back` | 1.5 | mm behind centre, before the visor clearance is applied |
-| `--keyring-cone` | 1.5 | mm, mouth funnel |
+| `--keyring-margin` | 1.5 | mm of helmet above the hole, from the local surface |
+| `--keyring-back` | 1 | mm further back, on top of the visor clearance |
+| `--keyring-cone` | 0 | mm, mouth funnel; 0 leaves a plain tube |
 | `--pad-depth` | 2 | mm the backpack pad is sunk into the torso |
 | `--assembly` | 0 | 1 also writes `assembly-preview.stl`, for looking at, not printing |
 | `--visor-facets` / `--facet-gap` | 1 / 3 | split the visor into facets; mm between them |
@@ -138,7 +138,8 @@ exactly. Glue them back into the helmet recess as one, or print the plain
 
 ## Keyring hole
 
-6 mm round, 2 mm of helmet above it, walls 2.0 mm at the front and 3.4 mm at
+6 mm round and a plain tube — funnelled mouths left a visible step around the
+opening. 1.4 mm of helmet above it, walls 3.0 mm at the front and 2.4 mm at
 the back, through a 12–15 mm bore. A 20 mm ID / 25 mm OD ring (2.5 mm wire)
 needs 5.0 mm for its two coils and, at the longest bore, 5.4 mm once its
 curve is allowed for — against 5.8 mm of hole.
