@@ -330,7 +330,7 @@ def keyring_hole(obj, slot, margin, back, cone, keep_clear=None):
     if not band:
         raise SystemExit("no geometry at the keyring height")
     cx = (max(p.x for p in band) + min(p.x for p in band)) / 2
-    cy = (max(p.y for p in band) + min(p.y for p in band)) / 2 + back
+    cy = (max(p.y for p in band) + min(p.y for p in band)) / 2
     span = max(obj.dimensions) * 2
 
     # Sit clear of the visor plug: work out where the plug actually ends —
@@ -344,6 +344,7 @@ def keyring_hole(obj, slot, margin, back, cone, keep_clear=None):
         if cy < least:
             log(f"keyring: pushed back to clear the visor plug ({cy:.1f} -> {least:.1f})")
             cy = least
+    cy += back      # nudge, on top of whatever the visor clearance demanded
     # `margin` is measured from the helmet's surface directly above the hole,
     # not from the crown: the dome falls away behind the crown, and a hole set
     # from the crown's height breaks out through the top further back.
