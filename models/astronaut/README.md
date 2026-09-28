@@ -204,3 +204,76 @@ proportions with a bigger head, and the backpack split off to print flat.
 v3 flattens the soles. v4 shrinks it to 50 mm and
 fixes the helmet, which v2 had squashed by widening the whole figure: body
 and head are now reproportioned separately. Not yet printed.
+
+## Head-only QR variant
+
+`head_qr.py` produces the helmet only, with the visor opening on the bed,
+a perpendicular flat neck cut, and the successful **15 mm square-module QR**
+on a shaved rear face opposite the visor. The 15 mm includes four modules of
+white quiet zone; the black pattern is about 12.1 mm across and 0.2 mm high.
+
+The existing body STL is the dimensional reference. It is never scaled.
+The latest body rebuilt with `--keyring-back 0` supplies only a bounded crown
+region behind the visor; the original visor pocket is retained. The hole moves
+1.00 mm toward the visor and 0.37 mm upward, with its measured 5.99 mm diameter
+unchanged within 0.008 mm. The rest of the current body pipeline and its
+standard keyring defaults are unchanged.
+
+```sh
+uv run --script models/astronaut/astronaut.py tmp/astronaut-head/forward-source --keyring-back 0
+uv run --script models/astronaut/head_qr.py out/astronaut-head-qr \
+  --body /absolute/path/to/current/astronaut-body.stl \
+  --forward-body tmp/astronaut-head/forward-source/astronaut-body.stl \
+  --svg /absolute/path/to/square-qr.svg
+```
+
+This variant is calibrated to the current 50 mm astronaut, not an arbitrary
+resized input. Mismatched body bounds, a changed bore diameter, a missing
+visor plane, or a QR quiet zone that does not fit cause the build to fail.
+The source SVG uses a 33-module QR with 14 SVG units per module.
+
+| Parameter | Default | Meaning |
+| --- | --- | --- |
+| `HEAD_DEPTH` | 12.8 mm | White helmet depth in print orientation |
+| `QR_SIZE` / `QR_HEIGHT` | 15 / 0.2 mm | Quiet-zone square and black relief |
+| `SHOULDER_CUT_Y` | −28 mm | Restrict shoulder removal to the neck end |
+| `ENVELOPE_ALLOWANCE` | 0.15 mm | Preserve voxel-rounded lower helmet facets |
+| `NECK_Y` | −24.5 mm | Neck cut in the untranslated visor-down frame |
+| `HEAD_X` | −12.230462, 12.042460 mm | Original helmet width; clips collar wings |
+| `QR_CENTRE_X` / `QR_CENTRE_Y` | −0.075 / −36.475 mm | QR placement in that frame |
+| `QR_STL_GAP` | 0.001 mm | Sub-print-resolution separation of diagonal QR contacts for closed STL export |
+
+The shoulders are trimmed along the existing lower helmet facets, extended
+with a 0.15 mm outward allowance. These trims apply only beyond print Y=−28 mm.
+The visible neck ends in a perpendicular cut, retaining about 1.6 mm below
+the recess. The moved bore leaves
+about 1.88 mm toward the visor and 1.92 mm toward the QR face at its centre;
+the geometry report deducts 0.1 mm from each as a conservative allowance for
+the slightly tilted bore. These are below the general 2 mm load-bearing target:
+the fixed helmet, visor and six-millimetre hole leave only about 3.8 mm to
+share between those two walls. The existing approximately 1.4 mm crown roof
+is retained. Do not enlarge the bore or deepen the QR shave.
+
+The white STL is one closed solid, about 24.27 × 23.69 × 12.8 mm. The black
+part raises overall depth to 13 mm. Float32 STL round trips are checked;
+zero-volume triangles collapsed by quantization are discarded and tiny
+triangle/quad openings are repaired only within a 0.001 mm³ volume-change limit. Black
+and white share an origin: import both STLs together as one multipart object,
+or open the generated material-assigned 3MF. Filament 1 is black, 2 is white.
+
+Print with the P1S **0.2 mm nozzle**, AMS, 0.10 mm layers, 0.22 mm lines,
+4 walls, 20% gyroid, 6 top and 5 bottom layers. Use normal snug supports from
+the bed inside the downward-facing visor recess (its ceiling spans about
+21 mm), a 3 mm outer brim, and a prime tower. The local sliced project uses
+white support with 0.15 mm top separation and 0.25 mm interface spacing.
+Remove the supports and brim carefully before fitting an existing visor.
+Smooth PEI is selected in the supplied project; select the actual plate and
+map black/white to the loaded AMS slots. White prints first, then only the
+two black QR layers. Do not independently arrange or scale the two parts.
+
+The supplied sliced head estimates **1 h 27 min 49 s / 4.84 g**, including
+supports, brim and purge.
+
+The build writes a three-view PNG and geometry report beside the printable
+files. Status: geometry checked and sliced; physical fit, support release and
+QR scan reliability still need the first head print.
