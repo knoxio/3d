@@ -81,15 +81,15 @@ class HeadTests(unittest.TestCase):
     def test_cut_is_perpendicular_and_black_is_fully_supported(self):
         source = md.Manifold.cube((24, 30, 18)).translate((-12, -50, -14))
         black, white, report = shape_head(source, np.eye(3), box(0, 0, 33, 33), HeadSettings(module=1, x_limits=None))
-        np.testing.assert_allclose(white.bounds, [[0, 0, 0], [24, 25.5, 12.8]])
-        np.testing.assert_allclose(black.bounds[:, 2], [12.8, 13])
+        np.testing.assert_allclose(white.bounds, [[0, 0, 0], [24, 25.5, 14]])
+        np.testing.assert_allclose(black.bounds[:, 2], [14, 14.2])
         self.assertTrue(white.is_watertight)
         self.assertTrue(black.is_watertight)
         neck_faces = np.isclose(white.face_normals[:, 1], 1)
         np.testing.assert_allclose(white.face_normals[neck_faces] @ [0, 0, 1], 0)
-        black_footprint = solid(black).slice(12.9)
-        self.assertLess((black_footprint - solid(white).slice(12.799)).area(), 1e-7)
-        self.assertEqual(report['white_top_z_mm'], 12.8)
+        black_footprint = solid(black).slice(14.1)
+        self.assertLess((black_footprint - solid(white).slice(13.999)).area(), 1e-7)
+        self.assertEqual(report['white_top_z_mm'], 14)
 
     def test_shoulders_are_removed_but_neck_is_retained(self):
         source = md.Manifold.cube((24, 30, 18)).translate((-12, -50, -14))
@@ -97,7 +97,7 @@ class HeadTests(unittest.TestCase):
         black, white, _ = shape_head(source + shoulder, np.eye(3), box(0, 0, 33, 33),
                                     HeadSettings(module=1, x_limits=None,
                                                  neck_planes=(((1, 0, 0), 12), ((-1, 0, 0), 12))))
-        np.testing.assert_allclose(white.extents, [24, 25.5, 12.8])
+        np.testing.assert_allclose(white.extents, [24, 25.5, 14])
         self.assertTrue(white.is_watertight)
         self.assertTrue(black.is_watertight)
         with self.assertRaisesRegex(ValueError, 'shoulder cut'):
@@ -110,6 +110,21 @@ class HeadTests(unittest.TestCase):
         body = md.Manifold.cube((24, 30, 18)).translate((-12, -50, -14))
         with self.assertRaisesRegex(ValueError, 'positive'):
             shape_head(body, np.eye(3), box(0, 0, 1, 1), HeadSettings(depth=0))
+
+    def test_curved_quiet_zone_preserves_black_size_and_shallower_cap(self):
+        points = [(x, y, z) for z, half in [(0, 10), (18, 5)]
+                  for x in (-half, half) for y in (-half, half)]
+        body = md.Manifold.hull_points(points).translate((0, -36.47, 0))
+        artwork = box(0, 0, 33, 33)
+        settings = HeadSettings(module=1, qr_centre_x=0, x_limits=None)
+        black, white, _ = shape_head(body, np.eye(3), artwork, settings)
+        self.assertLess(white.volume, body.volume())
+        np.testing.assert_allclose(black.extents[:2], [15 * 33 / 41 - 0.001] * 2, atol=2e-6)
+        self.assertLess(solid(white).slice(13.999).area(), 15 * 15)
+        self.assertAlmostEqual(white.bounds[1, 2], 14)
+        with self.assertRaisesRegex(ValueError, 'black QR artwork'):
+            shape_head(body, np.eye(3), artwork, HeadSettings(module=1, depth=16,
+                                                            qr_centre_x=0, x_limits=None))
 
     def test_invalid_mesh_and_missing_pocket_fail(self):
         cube = trimesh.creation.box()
