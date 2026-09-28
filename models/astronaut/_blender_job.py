@@ -220,8 +220,9 @@ def visor_cutter(obj, material, depth):
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     bm.to_mesh(cutter.data)
     bm.free()
+    zs = [v.co.z for v in cutter.data.vertices]
     log(f"visor pocket: {len(cutter.data.polygons)} tris, floor {depth} mm deep, "
-        f"normal {[round(v, 2) for v in normal]}")
+        f"normal {[round(v, 2) for v in normal]}, z {min(zs):.1f}..{max(zs):.1f}")
     return cutter, normal, faces_only
 
 
@@ -309,50 +310,106 @@ def make_solid(obj, voxel, angle):
         raise SystemExit(f"{obj.name} could not be closed")
 
 
-def keyring_hole(obj, dia, margin, back, stretch, cone):
-    """Bore a left-to-right keyring slot near the crown of the helmet.
+def keyring_hole(obj, slot, margin, back, cone, keep_clear=None):
+    """Bore a left-to-right keyring hole near the crown of the helmet.
 
-    A round hole through a 16 mm helmet is a tunnel no split ring can curve
-    through, so the bore is stretched downward into a slot: the ring finds the
-    room it needs below the axis, while `margin` of solid helmet above the hole
-    is untouched. Sited on the helmet's own cross-section, not the whole
-    figure, which is wider at the arms.
+    `slot` is (across, tall) in mm, measured front-to-back and vertically. A
+    split ring threads as two coils lying side by side, perpendicular to its
+    plane, so the hole has to be about twice the wire thick in whichever
+    direction the ring's axis ends up pointing — roughly round, and at least
+    2x the wire across, is what lets the ring settle wherever it likes.
+
+    The hole hangs below `margin` of solid helmet, `back` mm behind the
+    helmet's centre, and each mouth is funnelled to shorten the straight run.
     """
+    across, tall = slot
     verts = obj.data.vertices
     top = max(v.co.z for v in verts)
-    z = top - margin - dia / 2
-    band = [v.co for v in verts if abs(v.co.z - z) < dia]
+    z = top - margin - tall / 2
+    band = [v.co for v in verts if abs(v.co.z - z) < tall]
     if not band:
         raise SystemExit("no geometry at the keyring height")
     cx = (max(p.x for p in band) + min(p.x for p in band)) / 2
-    cy = (max(p.y for p in band) + min(p.y for p in band)) / 2 + back   # toward the rear,
-    # where the dome is narrower, so a ring has less tunnel to curve through
+    cy = (max(p.y for p in band) + min(p.y for p in band)) / 2 + back
     span = max(obj.dimensions) * 2
-    sideways = (0, math.radians(90), 0)
 
-    bpy.ops.mesh.primitive_cylinder_add(radius=dia / 2, depth=span, location=(cx, cy, z), rotation=sideways)
+    # Sit clear of the visor plug: work out where the plug actually ends —
+    # the pocket intersected with the helmet — and start behind that.
+    if keep_clear is not None:
+        plug = duplicate_of(obj)
+        boolean(plug, duplicate_of(keep_clear), "INTERSECT")
+        rear_of_plug = max(v.co.y for v in plug.data.vertices)
+        bpy.data.objects.remove(plug, do_unlink=True)
+        least = rear_of_plug + across / 2 + 1.0
+        if cy < least:
+            log(f"keyring: pushed back to clear the visor plug ({cy:.1f} -> {least:.1f})")
+            cy = least
+    # `margin` is measured from the helmet's surface directly above the hole,
+    # not from the crown: the dome falls away behind the crown, and a hole set
+    # from the crown's height breaks out through the top further back.
+    for _ in range(3):
+        hit, above, _, _ = obj.ray_cast((cx, cy, top + 10), (0, 0, -1))
+        if not hit:
+            raise SystemExit("no helmet surface above the keyring hole")
+        z = above.z - margin - tall / 2
+        band = [v.co for v in verts if abs(v.co.z - z) < tall] or band
+    log(f"keyring: helmet surface above the hole is {above.z - top:.1f} mm off the crown")
+
+    rear = max(p.y for p in band)
+    if cy + across / 2 > rear - 1.0:
+        raise SystemExit(
+            f"keyring hole {across} mm across does not fit between the visor recess "
+            f"and the back of the helmet at {margin} mm below the crown"
+        )
+
+    def clear_of_visor(solid, what):
+        """The visor is already printed, so nothing may take material out of
+        the plug. The pocket prism reaches well out into the air in front of
+        the face, and cutting that costs nothing — what matters is the overlap
+        with the plug itself, which is the prism intersected with the helmet."""
+        if keep_clear is None:
+            return
+        test = duplicate_of(solid)
+        boolean(test, duplicate_of(keep_clear), "INTERSECT")
+        hit = volume_of(test)
+        if hit > 0.1:
+            boolean(test, duplicate_of(obj), "INTERSECT")
+            hit = volume_of(test)
+        bpy.data.objects.remove(test, do_unlink=True)
+        if hit > 0.1:
+            raise SystemExit(f"keyring {what} takes {hit:.2f} mm3 out of the visor plug")
+
+    bpy.ops.mesh.primitive_cylinder_add(
+        radius=0.5, depth=span, location=(cx, cy, z), rotation=(0, math.radians(90), 0),
+    )
     drill = bpy.context.active_object
-    drill.scale = (1, 1, stretch)                      # stretch the bore downward
-    drill.location.z -= dia * (stretch - 1) / 2
-    bpy.ops.object.transform_apply(location=True, scale=True)
+    # Scale acts in the object's own frame, before the rotation that lays the
+    # bore along X: local X becomes world Z, local Y stays world Y.
+    drill.scale = (tall, across, 1)
+    bpy.ops.object.transform_apply(scale=True)
+    clear_of_visor(drill, "slot")
     boolean(obj, drill, "DIFFERENCE")
     bpy.data.objects.remove(drill, do_unlink=True)
 
-    if cone > 0:                                       # small lead-in at each mouth
-        half = max(abs(p.x) for p in band)
+    if cone > 0:
+        local = [p for p in band if abs(p.y - cy) < across and abs(p.z - z) < tall / 2] or band
+        reach = max(abs(p.x - cx) for p in local)
         for side in (-1, 1):
             bpy.ops.mesh.primitive_cone_add(
-                radius1=dia / 2 + cone, radius2=dia / 2, depth=cone,
-                location=(cx + side * (half - cone / 2), cy, z),
+                radius1=across / 2 + cone, radius2=across / 2, depth=cone * 2,
+                location=(cx + side * (reach - cone), cy, z),
                 rotation=(0, math.radians(-90 * side), 0),
             )
             mouth = bpy.context.active_object
-            mouth.scale = (1, 1, stretch)
-            mouth.location.z -= dia * (stretch - 1) / 2
+            mouth.scale = (tall / across, 1, 1)
+            # dropped so its top stays level with the slot's: it opens
+            # downward and sideways, leaving the helmet above the hole alone
+            mouth.location.z -= cone * tall / across
             bpy.ops.object.transform_apply(location=True, scale=True)
+            clear_of_visor(mouth, "mouth funnel")
             boolean(obj, mouth, "DIFFERENCE")
             bpy.data.objects.remove(mouth, do_unlink=True)
-    log(f"keyring slot {dia} x {dia * stretch:.1f}, {margin} below the crown, {back} back")
+    log(f"keyring hole {across} across x {tall} tall, {margin} below the crown, {back} back")
 
 
 def flatten_feet(obj, trim):
@@ -717,8 +774,8 @@ for obj in filter(None, (body, pack)):
     remesh(obj, cfg["voxel"])
 
 flatten_feet(body, cfg["foot_trim"])
-keyring_hole(body, cfg["keyring_dia"], cfg["keyring_margin"], cfg["keyring_back"],
-             cfg["keyring_stretch"], cfg["keyring_cone"])
+keyring_hole(body, cfg["keyring_slot"], cfg["keyring_margin"], cfg["keyring_back"],
+             cfg["keyring_cone"], keep_clear=cutter)
 
 if pack is not None:
     pad_y, pad_z = flat_pad(body, pack, cfg["boss_fit"], cfg["pad_depth"])
