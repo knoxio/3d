@@ -37,12 +37,12 @@ QR_MODULE = 14.0  # source SVG units per module
 QR_STL_GAP = 0.001  # mm, separates diagonal point contacts at float32 precision
 HEAD_X = (-12.230462, 12.042460)  # mm, current helmet envelope before translation
 QR_HEIGHT = 0.2  # mm, two black layers
-HEAD_DEPTH = 12.8  # mm from the original visor-side extremity to the QR plane
+HEAD_DEPTH = 14.0  # mm from the original visor-side extremity to the QR plane
 SHOULDER_CUT_Y = -28.0  # mm, limit shoulder trimming to the neck end
 ENVELOPE_ALLOWANCE = 0.15  # mm, keep voxel-rounded helmet edges inside the trim envelope
 NECK_Y = -24.5  # mm in the rotated, untranslated current 50 mm body frame
-QR_CENTRE_Y = -36.475  # mm in that same print frame
-QR_CENTRE_X = -0.075  # mm, centred on the available rear facet
+QR_CENTRE_Y = -36.47  # mm in that same print frame
+QR_CENTRE_X = -0.06  # mm, centred on the available rear facet
 BORE_PATCH_GRID = 0.5  # mm, planar patch boundaries outside the six-mm bore
 BORE_PATCH_MARGIN = 0.3  # mm beyond the old and new bore sections
 MIN_REAR_WALL = 1.7  # mm between the bore and the shaved QR face
@@ -219,7 +219,8 @@ def shape_head(body: md.Manifold, rotation: np.ndarray, artwork: Polygon | Multi
 
     The existing lower helmet facets bound the shoulder removal. Remaining
     helmet surfaces are only rotated, translated or trimmed.
-    The full four-module quiet zone must fit on the resulting planar surface.
+    Only the black artwork must fit on the flat surface. Its four-module
+    white quiet zone may continue over the surrounding curved helmet.
     """
     if settings.depth <= 0 or settings.qr_height <= 0:
         raise ValueError("Depth and QR height must be positive")
@@ -241,13 +242,17 @@ def shape_head(body: md.Manifold, rotation: np.ndarray, artwork: Polygon | Multi
     square = md.CrossSection.square((settings.qr_size, settings.qr_size)).translate(
         (settings.qr_centre_x - settings.qr_size / 2, settings.qr_centre_y - settings.qr_size / 2))
     surface = value.slice(rear_z - 0.001)
-    if (square - surface).area() > 1e-5:
-        raise ValueError("The complete QR quiet zone does not fit on the cut helmet")
+    outline = md.CrossSection(value.project().to_polygons(), md.FillRule.Positive)
+    if (square - outline).area() > 1e-5:
+        raise ValueError("The complete QR quiet zone does not fit on the helmet outline")
     black, _ = make_parts(artwork, settings.qr_size, settings.module,
                           face_height=settings.qr_height,
                           thickness=settings.qr_height + 0.1, black_up=True, edge_clearance=QR_STL_GAP)
     black.apply_translation((settings.qr_centre_x - settings.qr_size / 2,
                              settings.qr_centre_y - settings.qr_size / 2, rear_z - 0.1))
+    black_outline = solid(black).project()
+    if (black_outline - surface).area() > 1e-5:
+        raise ValueError("The black QR artwork is not fully supported by the flat face")
     white = printable_mesh(mesh_of(value))
     shift = [-white.bounds[0, 0], -white.bounds[0, 1], -bed_z]
     white.apply_translation(shift)
@@ -260,6 +265,8 @@ def shape_head(body: md.Manifold, rotation: np.ndarray, artwork: Polygon | Multi
                           "qr_size_including_quiet_zone_mm": settings.qr_size,
                           "white_top_z_mm": settings.depth,
                           "black_height_mm": settings.qr_height,
+                          "black_artwork_dimensions_mm": black.extents[:2].tolist(),
+                          "quiet_zone_surface": "surrounding curved white helmet",
                           "neck_plane_source_y_mm": settings.neck_y}
 
 
