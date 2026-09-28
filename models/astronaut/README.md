@@ -41,13 +41,15 @@ about it is printable as-is. `astronaut.py` drives Blender to fix that:
    so the whole part lies down on the bed.
 5. Shaves `foot_trim` off the soles so it stands flat — the game feet taper
    to near-points. The height scale compensates, so `--height` still lands.
-6. Bores the keyring slot below the crown: a 3.6 mm bore stretched 2× downward
-   and funnelled at each mouth. A round hole through the helmet is a tunnel no
-   split ring can curve through; the slot gives the ring room below the axis,
-   and the funnels — dropped by their own radius so they open downward only —
-   shorten the straight run without touching the `keyring_margin` of solid
-   helmet above. The helmet narrows sharply toward the crown, so height is the
-   main lever on bore length.
+6. Bores the keyring hole below the crown. Size it by the ring's **wire**,
+   not its diameter: a split ring threads as two coils lying side by side, so
+   the hole needs about twice the wire thickness whichever way the ring ends
+   up sitting — 6 mm round for 2.5 mm wire (a 20 mm ID / 25 mm OD ring).
+   Placement is worked out rather than given: the hole is pushed back until it
+   clears the visor plug, which runs the full height of the helmet's face, and
+   `keyring_margin` is measured from the helmet's surface **directly above the
+   hole**, not from the crown — the dome falls away behind the crown, and a
+   hole set from the crown's height breaks out through the top.
 7. Splits the visor (faces using the `Player_Helm` material) into its own
    part, shrunk by `visor_gap` so it drops into the recess with room for glue.
    The pocket is a flat-backed prism, not a thickened copy of the visor faces:
@@ -69,7 +71,7 @@ close, and boolean unions over them come out hollow.
 
 | File | Colour | Size | Volume |
 | --- | --- | --- | --- |
-| `astronaut-body.stl` | white | 36.3 × 19.6 × 49.9 | 10.9 cm³ |
+| `astronaut-body.stl` | white | 36.3 × 19.6 × 49.9 | 10.6 cm³ |
 | `astronaut-visor.stl` | black | 22.0 × 20.9 × 10.1 | 1.7 cm³ |
 | `astronaut-backpack.stl` | white | 17.8 × 25.9 × 10.3 | 1.6 cm³ |
 | `astronaut-visor-facets.stl` | black | 84.6 × 14.0 × 7.9 | 1.7 cm³ |
@@ -112,9 +114,10 @@ at the FBX, `--height` scales the figure, and every tuning constant in
 | `--plump` / `--squash` | 1.15 / 0.88 | body only: wider across, shorter |
 | `--head-scale` | 1.2 | helmet, uniform about the neck |
 | `--foot-trim` | 1.0 | mm shaved off the soles |
-| `--keyring-dia` / `--keyring-margin` | 3.6 / 2 | mm, bore and solid helmet above it |
-| `--keyring-back` | 1.5 | mm toward the rear of the helmet |
-| `--keyring-stretch` / `--keyring-cone` | 2 / 3 | slot stretch downward; mouth funnel |
+| `--keyring-slot` | 6 6 | mm, hole front-to-back and vertically |
+| `--keyring-margin` | 2 | mm of helmet above the hole, from the local surface |
+| `--keyring-back` | 1.5 | mm behind centre, before the visor clearance is applied |
+| `--keyring-cone` | 1.5 | mm, mouth funnel |
 | `--pad-depth` | 2 | mm the backpack pad is sunk into the torso |
 | `--assembly` | 0 | 1 also writes `assembly-preview.stl`, for looking at, not printing |
 | `--visor-facets` / `--facet-gap` | 1 / 3 | split the visor into facets; mm between them |
@@ -132,6 +135,19 @@ pieces sit in a row `facet_gap` apart, roughly 79 mm² of contact each, and
 together they hold the same volume as the whole plug, so the cuts tile it
 exactly. Glue them back into the helmet recess as one, or print the plain
 `astronaut-visor.stl` instead. `--visor-facets 0` skips the file.
+
+## Keyring hole
+
+6 mm round, 2 mm of helmet above it, walls 2.0 mm at the front and 3.4 mm at
+the back, through a 12–15 mm bore. A 20 mm ID / 25 mm OD ring (2.5 mm wire)
+needs 5.0 mm for its two coils and, at the longest bore, 5.4 mm once its
+curve is allowed for — against 5.8 mm of hole.
+
+Nothing may take material out of the visor plug, since those are already
+printed: the build intersects each cutting solid with the plug and fails if
+the overlap is more than 0.1 mm³. The plug is the pocket intersected with the
+helmet, not the pocket prism, which reaches far out into the air in front of
+the face where cutting costs nothing.
 
 ## Checking the fit
 
