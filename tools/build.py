@@ -108,13 +108,17 @@ def build_scad(source: Path, dest: Path, fmt: str, preview: bool) -> list[Path]:
 
 
 def build_py(source: Path, dest: Path) -> list[Path]:
-    before = set(dest.iterdir())
+    """Run a generator and report new or rewritten exports, rejecting unchanged output."""
+    before = {path: (path.stat().st_mtime_ns, path.stat().st_size)
+              for path in dest.iterdir() if path.is_file()}
     result = subprocess.run(
         ["uv", "run", "--script", str(source), str(dest)], capture_output=True, text=True
     )
     if result.returncode != 0:
         raise RuntimeError(f"{source.relative_to(ROOT)}\n{result.stderr}")
-    written = sorted(set(dest.iterdir()) - before)
+    written = sorted(path for path in dest.iterdir()
+                     if path.is_file() and before.get(path) !=
+                     (path.stat().st_mtime_ns, path.stat().st_size))
     if not written:
         raise RuntimeError(f"{source.relative_to(ROOT)} wrote nothing to {dest}")
     return written

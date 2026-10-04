@@ -1,9 +1,14 @@
 // parts: base detailing assembled
+include <_ornament.scad>
 part = "assembled";
 
 panel_width = 200; // mm
 panel_height = 80; // mm
 base_thickness = 1.2; // mm
+edge_round_radius = 0.5; // mm, upper perimeter roundover
+bottom_chamfer = 0.2; // mm, 45-degree print-safe lower edge
+edge_round_segments = 10; // segments in the quarter-circle profile
+edge_skin = 0.001; // mm, loft cross-section thickness
 relief_height = 0.6; // mm
 corner_radius = 3; // mm
 top_curve_rise = 12; // mm, centre above ends
@@ -13,8 +18,6 @@ border_inset = 5; // mm
 border_width = 1.2; // mm
 artwork_width = 166; // mm
 artwork_height = 62; // mm
-reference_width = 200; // mm, SVG drawing canvas
-reference_height = 80; // mm, SVG drawing canvas
 $fa = 1;
 $fs = 0.4;
 
@@ -24,6 +27,11 @@ assert(top_curve_rise >= 0 && bottom_curve_drop >= 0);
 assert(top_curve_rise + bottom_curve_drop < panel_height - 2 * (border_inset + border_width + corner_radius));
 assert(curve_segments >= 4 && curve_segments % 2 == 0);
 assert(base_thickness >= 1.2);
+assert(edge_round_radius > 0 && bottom_chamfer > 0);
+assert(edge_round_radius + bottom_chamfer < base_thickness);
+assert(edge_round_segments >= 4);
+assert(edge_skin > 0 && edge_skin < bottom_chamfer);
+assert(edge_round_radius < border_inset);
 assert(relief_height >= 0.6);
 assert(artwork_width <= panel_width - 2 * (border_inset + border_width));
 assert(artwork_height <= panel_height - 2 * (border_inset + border_width));
@@ -44,9 +52,31 @@ module outline() {
         ));
 }
 
-/** Solid backing resting on Z=0. */
+module _edge_section(z, inset) {
+    translate([0, 0, min(z, base_thickness - edge_skin)])
+        linear_extrude(height = edge_skin)
+            offset(delta = -inset) outline();
+}
+
+/** Thin backing with a rounded top rim, 45-degree lower chamfer, and flat bed face. */
 module base() {
-    linear_extrude(height = base_thickness) outline();
+    hull() {
+        _edge_section(0, bottom_chamfer);
+        _edge_section(bottom_chamfer, 0);
+    }
+    translate([0, 0, bottom_chamfer])
+        linear_extrude(height = base_thickness - edge_round_radius - bottom_chamfer)
+            outline();
+    for (i = [0:edge_round_segments-1]) {
+        angle_a = 90 * i / edge_round_segments;
+        angle_b = 90 * (i+1) / edge_round_segments;
+        hull() {
+            _edge_section(base_thickness - edge_round_radius + edge_round_radius * sin(angle_a),
+                          edge_round_radius * (1-cos(angle_a)));
+            _edge_section(base_thickness - edge_round_radius + edge_round_radius * sin(angle_b),
+                          edge_round_radius * (1-cos(angle_b)));
+        }
+    }
 }
 
 /** Relief positioned on the backing; retain its Z offset when importing as an AMS part. */
@@ -58,9 +88,9 @@ module detailing() {
                     offset(delta = -border_inset) outline();
                     offset(delta = -border_inset - border_width) outline();
                 }
-                scale([artwork_width / reference_width,
-                       artwork_height / reference_height])
-                    import("_ornament.svg", center = true);
+                scale([artwork_width / art_canvas_width,
+                       artwork_height / art_canvas_height])
+                    ornament();
             }
 }
 

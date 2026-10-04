@@ -13,6 +13,22 @@ SOURCE = Path(__file__).with_name('chest_panel.scad')
 NS = {'m': 'http://schemas.microsoft.com/3dmanufacturing/core/2015/02'}
 
 
+def _surface_covers(vertices, triangles, point, z):
+    for triangle in triangles:
+        corners = [vertices[int(triangle.attrib[f'v{i}'])] for i in (1, 2, 3)]
+        if any(abs(corner[2] - z) > 0.0001 for corner in corners):
+            continue
+        a, b, c = corners
+        area = (b[0]-a[0])*(c[1]-a[1]) - (b[1]-a[1])*(c[0]-a[0])
+        if abs(area) < 0.000000001:
+            continue
+        crosses = [(b[0]-a[0])*(point[1]-a[1]) - (b[1]-a[1])*(point[0]-a[0])
+                   for a, b in zip(corners, corners[1:] + corners[:1])]
+        if min(crosses) >= -0.000001 or max(crosses) <= 0.000001:
+            return True
+    return False
+
+
 class PanelTests(unittest.TestCase):
     """Render real geometry to verify the print contract and parameter guards."""
 
@@ -52,6 +68,12 @@ class PanelTests(unittest.TestCase):
                         centre_vertices = [v for v in vertices if abs(v[0]) <= 1]
                         self.assertGreater(max(v[1] for v in centre_vertices), 39)
                         self.assertLess(min(v[1] for v in centre_vertices), -39)
+                        top_edge = [v for v in vertices if abs(v[2] - 1.2) < 0.0001]
+                        bed_edge = [v for v in vertices if abs(v[2]) < 0.0001]
+                        self.assertAlmostEqual(max(v[0] for v in top_edge), 99.5, delta=0.002)
+                        self.assertAlmostEqual(max(v[0] for v in bed_edge), 99.8, delta=0.002)
+                        round_levels = {round(v[2], 4) for v in vertices if 0.7 < v[2] < 1.2}
+                        self.assertGreaterEqual(len(round_levels), 8)
                     triangles = model.findall('.//m:triangle', NS)
                     self.assertTrue(triangles)
                     edges = Counter()
@@ -61,6 +83,15 @@ class PanelTests(unittest.TestCase):
                         for a, b in zip(indices, indices[1:] + indices[:1]):
                             edges[tuple(sorted((a, b)))] += 1
                     self.assertEqual(set(edges.values()), {2})
+                    if part == 'detailing':
+                        def covers(x, y):
+                            point = ((x-100)*166/200, (40-y)*62/80)
+                            return _surface_covers(vertices, triangles, point, 1.8)
+                        self.assertTrue(covers(108, 13), 'antler branches must join without a pinhole')
+                        self.assertTrue(covers(100, 75), 'foliage halves must join without a pinhole')
+                        self.assertFalse(covers(116, 25.7), 'eye recess must remain open')
+                        self.assertFalse(covers(46, 32), 'outlined leaf must retain its interior opening')
+                        self.assertTrue(covers(48, 32.333), 'outlined leaf must retain a printable rim')
                     if part == 'assembled':
                         palette = [b.attrib['displaycolor'] for b in model.findall('.//m:base', NS)]
                         colours = {palette[int(t.attrib['p1'])] for t in triangles}
@@ -69,7 +100,7 @@ class PanelTests(unittest.TestCase):
     def test_invalid_parameters(self):
         """Reject unsafe thickness, artwork outside the panel, and unknown part names."""
         with tempfile.TemporaryDirectory(dir=ROOT / 'tmp') as scratch:
-            for setting in ['base_thickness=0.8', 'panel_width=100', 'relief_height=0.2', 'part="missing"', 'top_curve_rise=-1', 'bottom_curve_drop=80', 'curve_segments=5']:
+            for setting in ['base_thickness=0.8', 'panel_width=100', 'relief_height=0.2', 'part="missing"', 'top_curve_rise=-1', 'bottom_curve_drop=80', 'curve_segments=5', 'edge_round_radius=1.1', 'bottom_chamfer=0', 'edge_round_segments=2']:
                 with self.subTest(setting=setting):
                     result = subprocess.run(
                         ['openscad', '--hardwarnings', '--backend', 'manifold',
