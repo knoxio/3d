@@ -43,7 +43,15 @@ class PanelTests(unittest.TestCase):
                     self.assertLessEqual(high[1], 40)
                     if part != 'detailing':
                         self.assertAlmostEqual(high[0] - low[0], 200, places=5)
-                        self.assertAlmostEqual(high[1] - low[1], 80, places=5)
+                        self.assertAlmostEqual(high[1] - low[1], 80, delta=0.001)
+                    if part == 'base':
+                        end_vertices = [v for v in vertices if abs(v[0]) >= 90]
+                        self.assertTrue(end_vertices)
+                        self.assertLess(max(v[1] for v in end_vertices), 34)
+                        self.assertGreater(min(v[1] for v in end_vertices), -33)
+                        centre_vertices = [v for v in vertices if abs(v[0]) <= 1]
+                        self.assertGreater(max(v[1] for v in centre_vertices), 39)
+                        self.assertLess(min(v[1] for v in centre_vertices), -39)
                     triangles = model.findall('.//m:triangle', NS)
                     self.assertTrue(triangles)
                     edges = Counter()
@@ -61,7 +69,7 @@ class PanelTests(unittest.TestCase):
     def test_invalid_parameters(self):
         """Reject unsafe thickness, artwork outside the panel, and unknown part names."""
         with tempfile.TemporaryDirectory(dir=ROOT / 'tmp') as scratch:
-            for setting in ['base_thickness=0.8', 'panel_width=100', 'relief_height=0.2', 'part="missing"']:
+            for setting in ['base_thickness=0.8', 'panel_width=100', 'relief_height=0.2', 'part="missing"', 'top_curve_rise=-1', 'bottom_curve_drop=80', 'curve_segments=5']:
                 with self.subTest(setting=setting):
                     result = subprocess.run(
                         ['openscad', '--hardwarnings', '--backend', 'manifold',

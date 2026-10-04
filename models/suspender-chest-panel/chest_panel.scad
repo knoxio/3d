@@ -6,6 +6,9 @@ panel_height = 80; // mm
 base_thickness = 1.2; // mm
 relief_height = 0.6; // mm
 corner_radius = 3; // mm
+top_curve_rise = 12; // mm, centre above ends
+bottom_curve_drop = 14; // mm, centre below ends
+curve_segments = 100; // number of segments per curved edge, even
 border_inset = 5; // mm
 border_width = 1.2; // mm
 artwork_width = 166; // mm
@@ -17,17 +20,28 @@ $fs = 0.4;
 
 assert(panel_width > 2 * (border_inset + border_width + corner_radius));
 assert(panel_height > 2 * (border_inset + border_width + corner_radius));
+assert(top_curve_rise >= 0 && bottom_curve_drop >= 0);
+assert(top_curve_rise + bottom_curve_drop < panel_height - 2 * (border_inset + border_width + corner_radius));
+assert(curve_segments >= 4 && curve_segments % 2 == 0);
 assert(base_thickness >= 1.2);
 assert(relief_height >= 0.6);
 assert(artwork_width <= panel_width - 2 * (border_inset + border_width));
 assert(artwork_height <= panel_height - 2 * (border_inset + border_width));
 assert(part == "base" || part == "detailing" || part == "assembled");
 
-/** Rounded panel footprint, centred on the origin. */
+/** Bowed chest bridge footprint with rounded ends and a fixed overall envelope. */
 module outline() {
+    inner_half_width = panel_width / 2 - corner_radius;
+    inner_half_height = panel_height / 2 - corner_radius;
     offset(r = corner_radius)
-        square([panel_width - 2 * corner_radius,
-                panel_height - 2 * corner_radius], center = true);
+        polygon(concat(
+            [for (i = [0:curve_segments])
+                let(u = 2 * i / curve_segments - 1)
+                [u * inner_half_width, inner_half_height - top_curve_rise * u * u]],
+            [for (i = [curve_segments:-1:0])
+                let(u = 2 * i / curve_segments - 1)
+                [u * inner_half_width, -inner_half_height + bottom_curve_drop * u * u]]
+        ));
 }
 
 /** Solid backing resting on Z=0. */
