@@ -53,12 +53,12 @@ class PanelTests(unittest.TestCase):
                     high = [max(v[a] for v in vertices) for a in range(3)]
                     self.assertAlmostEqual(low[2], bottom, places=5)
                     self.assertAlmostEqual(high[2] - low[2], height, places=5)
-                    self.assertGreaterEqual(low[0], -100)
-                    self.assertLessEqual(high[0], 100)
+                    self.assertGreaterEqual(low[0], -104)
+                    self.assertLessEqual(high[0], 104)
                     self.assertGreaterEqual(low[1], -40)
                     self.assertLessEqual(high[1], 40)
                     if part != 'detailing':
-                        self.assertAlmostEqual(high[0] - low[0], 200, places=5)
+                        self.assertAlmostEqual(high[0] - low[0], 208, places=5)
                         self.assertAlmostEqual(high[1] - low[1], 80, delta=0.001)
                     if part == 'base':
                         end_vertices = [v for v in vertices if abs(v[0]) >= 90]
@@ -68,10 +68,17 @@ class PanelTests(unittest.TestCase):
                         centre_vertices = [v for v in vertices if abs(v[0]) <= 1]
                         self.assertGreater(max(v[1] for v in centre_vertices), 39)
                         self.assertLess(min(v[1] for v in centre_vertices), -39)
+                        tab_vertices = [v for v in vertices if abs(v[0]) > 90.001]
+                        self.assertTrue(tab_vertices)
+                        for v in tab_vertices:
+                            radius = ((abs(v[0])-90)**2 + v[1]**2)**0.5
+                            self.assertLessEqual(radius, 14.001)
+                        side_vertices = [v for v in vertices if abs(v[0]) > 98]
+                        self.assertLess(max(v[1] for v in side_vertices), 12)
                         top_edge = [v for v in vertices if abs(v[2] - 1.2) < 0.0001]
                         bed_edge = [v for v in vertices if abs(v[2]) < 0.0001]
-                        self.assertAlmostEqual(max(v[0] for v in top_edge), 99.5, delta=0.002)
-                        self.assertAlmostEqual(max(v[0] for v in bed_edge), 99.8, delta=0.002)
+                        self.assertAlmostEqual(max(v[0] for v in top_edge), 103.5, delta=0.002)
+                        self.assertAlmostEqual(max(v[0] for v in bed_edge), 103.8, delta=0.002)
                         round_levels = {round(v[2], 4) for v in vertices if 0.7 < v[2] < 1.2}
                         self.assertGreaterEqual(len(round_levels), 8)
                     triangles = model.findall('.//m:triangle', NS)
@@ -100,7 +107,7 @@ class PanelTests(unittest.TestCase):
     def test_invalid_parameters(self):
         """Reject unsafe thickness, artwork outside the panel, and unknown part names."""
         with tempfile.TemporaryDirectory(dir=ROOT / 'tmp') as scratch:
-            for setting in ['base_thickness=0.8', 'panel_width=100', 'relief_height=0.2', 'part="missing"', 'top_curve_rise=-1', 'bottom_curve_drop=80', 'curve_segments=5', 'edge_round_radius=1.1', 'bottom_chamfer=0', 'edge_round_segments=2']:
+            for setting in ['base_thickness=0.8', 'panel_width=100', 'relief_height=0.2', 'part="missing"', 'top_curve_rise=-1', 'bottom_curve_drop=80', 'curve_segments=5', 'tab_diameter=0', 'tab_diameter=90', 'panel_width=246', 'strap_width=10', 'edge_round_radius=1.1', 'bottom_chamfer=0', 'edge_round_segments=2']:
                 with self.subTest(setting=setting):
                     result = subprocess.run(
                         ['openscad', '--hardwarnings', '--backend', 'manifold',

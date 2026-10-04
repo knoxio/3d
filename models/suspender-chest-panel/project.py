@@ -21,7 +21,7 @@ MODEL_RELATIONSHIP = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmod
 PROFILE_SOURCE = Path(__file__).with_name("_project_settings.json")
 BASE_HEIGHT = 1.2  # mm
 DETAIL_HEIGHT = 0.6  # mm
-PANEL_WIDTH = 200  # mm
+PANEL_WIDTH = 208  # mm
 PANEL_HEIGHT = 80  # mm
 PLATE_CENTER = 128  # mm
 

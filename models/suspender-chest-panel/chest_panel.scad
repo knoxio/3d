@@ -2,7 +2,11 @@
 include <_ornament.scad>
 part = "assembled";
 
-panel_width = 200; // mm
+strap_outer_width = 240; // mm, outside edge to outside edge of both suspenders
+strap_width = 30; // mm, each suspender
+tab_diameter = 28; // mm
+body_width = strap_outer_width - 2 * strap_width; // mm, visible middle between straps
+panel_width = body_width + tab_diameter; // mm, semicircular tabs project half a diameter each
 panel_height = 80; // mm
 base_thickness = 1.2; // mm
 edge_round_radius = 0.5; // mm, upper perimeter roundover
@@ -21,7 +25,12 @@ artwork_height = 62; // mm
 $fa = 1;
 $fs = 0.4;
 
-assert(panel_width > 2 * (border_inset + border_width + corner_radius));
+assert(body_width == strap_outer_width - 2 * strap_width);
+assert(panel_width == body_width + tab_diameter);
+assert(panel_width <= 245 && panel_height <= 245);
+assert(strap_width > 0 && tab_diameter / 2 <= strap_width);
+assert(tab_diameter > 2 * edge_round_radius && tab_diameter < panel_height);
+assert(body_width > 2 * (border_inset + border_width + corner_radius));
 assert(panel_height > 2 * (border_inset + border_width + corner_radius));
 assert(top_curve_rise >= 0 && bottom_curve_drop >= 0);
 assert(top_curve_rise + bottom_curve_drop < panel_height - 2 * (border_inset + border_width + corner_radius));
@@ -33,13 +42,13 @@ assert(edge_round_segments >= 4);
 assert(edge_skin > 0 && edge_skin < bottom_chamfer);
 assert(edge_round_radius < border_inset);
 assert(relief_height >= 0.6);
-assert(artwork_width <= panel_width - 2 * (border_inset + border_width));
+assert(artwork_width <= body_width - 2 * (border_inset + border_width));
 assert(artwork_height <= panel_height - 2 * (border_inset + border_width));
 assert(part == "base" || part == "detailing" || part == "assembled");
 
 /** Bowed chest bridge footprint with rounded ends and a fixed overall envelope. */
-module outline() {
-    inner_half_width = panel_width / 2 - corner_radius;
+module body_outline() {
+    inner_half_width = body_width / 2 - corner_radius;
     inner_half_height = panel_height / 2 - corner_radius;
     offset(r = corner_radius)
         polygon(concat(
@@ -52,31 +61,39 @@ module outline() {
         ));
 }
 
-module _edge_section(z, inset) {
+module _edge_section(z, inset, side) {
     translate([0, 0, min(z, base_thickness - edge_skin)])
         linear_extrude(height = edge_skin)
-            offset(delta = -inset) outline();
+            offset(delta = -inset)
+                if (side == 0) body_outline();
+                else translate([side * body_width / 2, 0]) circle(d = tab_diameter);
 }
 
-/** Thin backing with a rounded top rim, 45-degree lower chamfer, and flat bed face. */
-module base() {
+module _rounded_solid(side) {
     hull() {
-        _edge_section(0, bottom_chamfer);
-        _edge_section(bottom_chamfer, 0);
+        _edge_section(0, bottom_chamfer, side);
+        _edge_section(bottom_chamfer, 0, side);
     }
-    translate([0, 0, bottom_chamfer])
-        linear_extrude(height = base_thickness - edge_round_radius - bottom_chamfer)
-            outline();
+    hull() {
+        _edge_section(bottom_chamfer, 0, side);
+        _edge_section(base_thickness - edge_round_radius, 0, side);
+    }
     for (i = [0:edge_round_segments-1]) {
         angle_a = 90 * i / edge_round_segments;
         angle_b = 90 * (i+1) / edge_round_segments;
         hull() {
             _edge_section(base_thickness - edge_round_radius + edge_round_radius * sin(angle_a),
-                          edge_round_radius * (1-cos(angle_a)));
+                          edge_round_radius * (1-cos(angle_a)), side);
             _edge_section(base_thickness - edge_round_radius + edge_round_radius * sin(angle_b),
-                          edge_round_radius * (1-cos(angle_b)));
+                          edge_round_radius * (1-cos(angle_b)), side);
         }
     }
+}
+
+/** Thin rounded backing with integral semicircular strap tabs and a flat bed face. */
+module base() {
+    _rounded_solid(0);
+    for (side = [-1,1]) _rounded_solid(side);
 }
 
 /** Relief positioned on the backing; retain its Z offset when importing as an AMS part. */
@@ -85,8 +102,8 @@ module detailing() {
         linear_extrude(height = relief_height)
             union() {
                 difference() {
-                    offset(delta = -border_inset) outline();
-                    offset(delta = -border_inset - border_width) outline();
+                    offset(delta = -border_inset) body_outline();
+                    offset(delta = -border_inset - border_width) body_outline();
                 }
                 scale([artwork_width / art_canvas_width,
                        artwork_height / art_canvas_height])

@@ -53,7 +53,7 @@ Its model README says how to run it.
 
 | Slug | What |
 | --- | --- |
-| [`suspender-chest-panel`](models/suspender-chest-panel) | Thin 200 × 80 mm black/white stag chest panel for suspenders |
+| [`suspender-chest-panel`](models/suspender-chest-panel) | Thin 208 × 80 mm stag chest panel for 30 mm straps spaced 240 mm outside-to-outside |
 | [`astronaut`](models/astronaut) | Game-asset astronaut keyring, plus a visor-compatible head with raised rear QR |
 | [`QR size tests`](qr_code) | Two-colour SVG QR cards, including the thin black-up experiment |
 | [`art-frame`](models/art-frame) | 14-piece dovetailed LED frame for a 1100 × 600 relief tile artwork |
