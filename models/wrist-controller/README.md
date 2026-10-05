@@ -16,7 +16,7 @@ arm, Z up. Measurements off the bench go straight into the parameter block.
 | Green board | 70 × 30 × 1.5 at origin | measured |
 | KY-040 board | 18.5 × 25.6, butted with 0.5 gap | measured |
 | Board holes | Ø2.5 at 2.45 in from both green edges; Ø3.5 at X 85.75, Y 6.95/23.05 | derived from edge gaps |
-| Buttons | X 60.5, Y 8.4 / 16.2 / 24.0, Ø6 | derived; gaps disagree by ~1.4, holes are Ø7.5 |
+| Buttons | X 60.5, Y 8.4 / 16.2 / 24.0, Ø6 | derived; gaps disagree by ~1.4, holes are Ø7.0 |
 | Encoder shaft | X 78.2, Y 13.2 | four readings closing within 0.35 |
 | Screen PCB | corner at 0.1, 3.5 | rough; overhangs the back edge by 7 |
 | USB-C | centre Y 18.0 | 7.5 gap to the board's back edge, Ø9 socket assumed |
@@ -25,8 +25,8 @@ arm, Z up. Measurements off the bench go straight into the parameter block.
 
 The base is one height all round: its rim stops at `hand_top` 8.5 above the
 board, which is all the knob half needs, because buttons and knob are meant to
-stand proud of it — the button bodies pass through Ø7.5 holes and the knob
-through a Ø17 one.
+stand proud of it — the button bodies pass through Ø7.0 holes and the encoder's
+bush through a Ø8.0 one.
 
 The extra height the screen wants belongs to its lid instead. The elbow lid is
 a raised cap: a flange that lands on the base's rim, walls, and a roof 13.5 mm
@@ -50,9 +50,10 @@ face, which leaves only glass-thickness of pad above the PCB — too shallow for
 a heat-set insert, so those four are M2 self-tappers into Ø1.7 pilots. The
 case's own lid screws are unchanged: M2 into heat-set inserts.
 
-The knob opening is Ø17 clearance around the Ø14.5 knob, with no hole for the
-bush: the bush top sits 11 mm above the board, below the lid's inner face, so
-nothing has to line up with it.
+The knob opening clears the **bush**, not the knob: Ø8.0 around the Ø6.85
+thread. The knob itself stays off until the lid is on, and its Ø14.5 skirt then
+hides the hole — asserted, along with the 0.5 mm between the lid's top face and
+the knob's underside at 11 mm.
 
 ## Strap
 

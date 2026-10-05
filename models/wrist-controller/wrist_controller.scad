@@ -33,17 +33,16 @@ usb_h = 3.2;
 
 /* [Buttons] */
 button_d = 6;
-button_hole_d = 7.5;        // clearance absorbs the +-0.7 the gaps disagree by
+button_hole_d = 7.0;        // clearance absorbs the +-0.7 the gaps disagree by
 button_x = 60.5;
 button_y = [8.4, 16.2, 24.0];
 
 /* [Knob] */
 shaft = [78.2, 13.2];       // measured four ways, closing within 0.35 mm
-bush_d = 6.85;
-knob_d = 14.5;
-knob_clear = 2.5;           // total, around the knob
+bush_d = 6.85;              // the threaded bush: what the lid has to clear
+knob_clear = 1.15;          // total, around the bush
+knob_d = 14.5;              // the knob's skirt, which hides the hole
 knob_bottom = 11;           // board to the underside of the knob
-knob_top = 17;              // board to the top of the knob
 
 /* [Screen, mounted to the elbow lid] */
 screen_pcb = [35.5, 33.5];
@@ -113,6 +112,9 @@ top_hand = hand_top;
 inner_top = top_screen;
 floor_z = -(wire_space + green[2]);           // inner floor, below the board
 size_xy = [outer[1][0] - outer[0][0], outer[1][1] - outer[0][1]];
+
+assert(knob_bottom >= top_hand + lid_t, "the knob fouls the hand lid");
+assert(knob_d > bush_d + knob_clear + 2, "the knob no longer hides its hole");
 
 echo(str("case ", size_xy[0], " x ", size_xy[1],
          " x ", top_screen - floor_z + floor_t + lid_t, " mm at the screen, ",
@@ -257,7 +259,7 @@ module lid_hand() {
         for (y = button_y)
             translate([button_x, y, top_hand - 1]) cylinder(d = button_hole_d, h = lid_t + 2);
         translate([shaft[0], shaft[1], top_hand - 1])
-            cylinder(d = knob_d + knob_clear, h = lid_t + 2);
+            cylinder(d = bush_d + knob_clear, h = lid_t + 2);
     }
 }
 
