@@ -57,4 +57,5 @@ Its model README says how to run it.
 | [`QR size tests`](qr_code) | Two-colour SVG QR cards, including the thin black-up experiment |
 | [`art-frame`](models/art-frame) | 14-piece dovetailed LED frame for a 1100 × 600 relief tile artwork |
 | [`cabinet-light-guide`](models/cabinet-light-guide) | Hidden LED strip channel for a glass cabinet, 3 pieces per 560 mm run |
+| [`wrist-controller`](models/wrist-controller) | Enclosure for a wrist-worn costume remote, built around an existing perfboard |
 | [`pcb-cases`](models/pcb-cases) | Parametric snap-fit cases for bare PCBs |
