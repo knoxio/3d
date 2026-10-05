@@ -77,6 +77,27 @@ thread. The knob itself stays off until the lid is on, and its Ø14.5 skirt then
 hides the hole — asserted, along with the 0.5 mm between the lid's top face and
 the knob's underside at 11 mm.
 
+## Lid fixings
+
+The boards go into the case from above, so a post anywhere inside their
+footprint blocks them at every height — tapering its foot does not help. The
+posts sit against the outer wall instead, half buried in it, in the four places
+the boards leave free:
+
+| Where | Why it is free |
+| --- | --- |
+| Off both ends | the boards stop 5 and 3.5 mm short |
+| Along the back | 7.5 mm of clearance for the screen's overhang |
+| Front, over the KY-040 | that board is 25.6 wide against the green one's 30 |
+| Front, elsewhere | **nothing fits** — only 2.6 mm |
+
+That leaves the seam's front corner with no room for an insert's Ø6 boss. It
+gets a Ø4 one the screw taps for itself, which clears the board by 0.6 mm. The
+other seven are M2 heat-set inserts as before.
+
+An assert checks every post against both board footprints, so this cannot come
+back quietly.
+
 ## Strap
 
 The band crosses the arm, so the lugs are on the long sides, not the ends. Each

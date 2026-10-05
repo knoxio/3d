@@ -81,6 +81,11 @@ insert_depth = 4;
 screw_d = 2.2;
 screw_head_d = 4;
 boss_d = 6;
+// Where the boards leave no room for an insert's boss, the screw taps its own
+// thread in a slimmer one.
+tap_boss_d = 4;
+tap_pilot_d = 1.7;
+tap_depth = 6;
 // The screen's glass sits straight against the roof; these pins pass through
 // its own Ø3.5 holes and are flattened with a hot iron to hold it there.
 screen_pin_d = 3.2;
@@ -131,6 +136,22 @@ win_lo = [for (i = [0, 1]) max(lit_at[i] - window_margin, glass_at[i] + glass_se
 win_hi = [for (i = [0, 1]) min(lit_at[i] + lit[i] + window_margin,
                                glass_at[i] + glass[i] - glass_seat)];
 size_xy = [outer[1][0] - outer[0][0], outer[1][1] - outer[0][1]];
+
+// What the boards occupy, as [x0, y0, x1, y1] — the one thing a lid post may
+// not stand in, at any height, because the boards go in from above.
+board_rects = [[0, 0, green[0], green[1]],
+               [green[0] + black_gap, (green[1] - black[1]) / 2,
+                green[0] + black_gap + black[0], (green[1] + black[1]) / 2]];
+
+function fouled_by(f) =
+    let (r = (f[2] ? tap_boss_d : boss_d) / 2)
+    [for (b = board_rects)
+        if (min(f[0] + r, b[2]) > max(f[0] - r, b[0]) &&
+            min(f[1] + r, b[3]) > max(f[1] - r, b[1])) b];
+
+assert(len([for (l = ["elbow", "hand"], f = fixings(l))
+            if (len(fouled_by(f)) > 0) f]) == 0,
+       "a lid post stands in a board's footprint");
 
 assert(knob_bottom >= top_hand + lid_t, "the knob fouls the hand lid");
 assert(knob_d > bush_d + knob_clear + 2, "the knob no longer hides its hole");
@@ -183,10 +204,12 @@ module cavity() {
                   max(corner_r - wall, 1));
 }
 
-module boss(x, y, h) {
+module boss(x, y, h, tapped = false) {
     translate([x, y, floor_z]) difference() {
-        cylinder(d = boss_d, h = h);
-        translate([0, 0, h - insert_depth]) cylinder(d = insert_d, h = insert_depth + 1);
+        cylinder(d = tapped ? tap_boss_d : boss_d, h = h);
+        translate([0, 0, h - (tapped ? tap_depth : insert_depth)])
+            cylinder(d = tapped ? tap_pilot_d : insert_d,
+                     h = (tapped ? tap_depth : insert_depth) + 1);
     }
 }
 
@@ -197,10 +220,29 @@ module board_bosses() {
     for (y = black_hole_y) boss(black_hole_x, y, wire_space);
 }
 
-module lid_posts(x0, x1, top) {
-    for (x = [x0 + boss_d / 2 + 1, x1 - boss_d / 2 - 1],
-         y = [inner[0][1] + boss_d / 2, inner[1][1] - boss_d / 2])
-        boss(x, y, top - floor_z);
+// The boards drop straight in, so a post anywhere inside their footprint
+// blocks them at every height — tapering its foot would not help. The posts
+// therefore sit against the outer wall, in the four places the boards leave:
+// off both ends, along the back, and across the front only where the narrower
+// KY-040 board stops short of it. That leaves one corner, at the seam on the
+// front, with no room for an insert's Ø6 boss; it gets a slim tapped one.
+// [x, y, tapped]
+function fixings(lid) =
+    let (front = outer[0][1] + boss_d / 2,
+         back = outer[1][1] - boss_d / 2,
+         elbow = outer[0][0] + boss_d / 2,
+         hand = outer[1][0] - boss_d / 2,
+         black_mid = green[0] + black_gap + black[0] / 2)
+    lid == "elbow"
+        ? [[elbow, front, false], [elbow, back, false],
+           [seam_x - boss_d / 2 - 1, back, false],
+           [seam_x - tap_boss_d / 2 - 1, outer[0][1] + tap_boss_d / 2, true]]
+        : [[seam_x + boss_d / 2 + 1, back, false], [black_mid, front, false],
+           [hand, front, false], [hand, back, false]];
+
+module lid_posts() {
+    for (lid = ["elbow", "hand"], f = fixings(lid))
+        boss(f[0], f[1], top_hand - floor_z, f[2]);
 }
 
 module strap_lugs() {
@@ -252,33 +294,32 @@ module base() {
                 cavity();
             }
             board_bosses();
-            lid_posts(inner[0][0], seam_x, top_hand);
-            lid_posts(seam_x, inner[1][0], top_hand);
+            lid_posts();
             strap_lugs();
         }
         openings();
     }
 }
 
+module screw_holes(lid, top) {
+    for (f = fixings(lid)) translate([f[0], f[1], top - 1]) {
+        cylinder(d = screw_d, h = lid_t + 2);
+        translate([0, 0, lid_t + 1 - 1.2]) cylinder(d = screw_head_d, h = 1.4);
+    }
+}
+
 module lid(x0, x1, top) {
-    difference() {
-        intersection() {
-            shell();
-            translate([x0, outer[0][1] - 1, top])
-                cube([x1 - x0, size_xy[1] + 2, lid_t]);
-        }
-        for (x = [x0 + boss_d / 2 + 1, x1 - boss_d / 2 - 1],
-             y = [inner[0][1] + boss_d / 2, inner[1][1] - boss_d / 2])
-            if (x > x0 && x < x1) translate([x, y, top - 1]) {
-                cylinder(d = screw_d, h = lid_t + 2);
-                translate([0, 0, lid_t + 1 - 1.2]) cylinder(d = screw_head_d, h = 1.4);
-            }
+    intersection() {
+        shell();
+        translate([x0, outer[0][1] - 1, top])
+            cube([x1 - x0, size_xy[1] + 2, lid_t]);
     }
 }
 
 module lid_hand() {
     difference() {
         lid(seam_x, outer[1][0] + 1, top_hand);
+        screw_holes("hand", top_hand);
         for (y = button_y)
             translate([button_x, y, top_hand - 1]) cylinder(d = button_hole_d, h = lid_t + 2);
         translate([shaft[0], shaft[1], top_hand - 1])
@@ -313,9 +354,8 @@ module lid_elbow() {
             }
             intersection() {
                 shell();
-                for (x = [inner[0][0] + boss_d / 2 + 1, seam_x - boss_d / 2 - 1],
-                     y = [inner[0][1] + boss_d / 2, inner[1][1] - boss_d / 2])
-                    translate([x, y, top_hand]) cylinder(d = tab_d, h = lid_t);
+                for (f = fixings("elbow"))
+                    translate([f[0], f[1], top_hand]) cylinder(d = tab_d, h = lid_t);
             }
             for (p = screen_holes())
                 translate([p[0], p[1], top_screen - pin_len])
@@ -333,12 +373,7 @@ module lid_elbow() {
                        top_screen + lid_t - 0.01])
                 cube([win[0] + 2 * window_bevel, win[1] + 2 * window_bevel, 1]);
         }
-        for (x = [inner[0][0] + boss_d / 2 + 1, seam_x - boss_d / 2 - 1],
-             y = [inner[0][1] + boss_d / 2, inner[1][1] - boss_d / 2])
-            translate([x, y, top_hand - 1]) {
-                cylinder(d = screw_d, h = lid_t + 2);
-                translate([0, 0, lid_t + 1 - 1.2]) cylinder(d = screw_head_d, h = 1.4);
-            }
+        screw_holes("elbow", top_hand);
         // Sunk into the face, not raised off it: this face prints against the
         // bed, so the letters start a couple of layers up and a filament swap
         // there puts them in their own colour.
