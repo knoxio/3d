@@ -64,8 +64,8 @@ wall = 2;
 floor_t = 2;
 lid_t = 2;
 ceiling_slack = 1.5;        // above the screen, the tallest thing inside
+flange_w = 8;               // the cap's landing on the base's rim
 hand_top = 8.5;             // board to the lid over buttons and knob: they stand proud
-step_chamfer = 3;           // 45 deg face where the tall half steps down
 corner_r = 4;
 forearm_r = 40;             // underside curve; measure and correct
 seam_x = 46;                // lid split, clear of screen and buttons
@@ -76,6 +76,10 @@ insert_depth = 4;
 screw_d = 2.2;
 screw_head_d = 4;
 boss_d = 6;
+// The screen hangs with its glass against the roof, so its pads are only as
+// deep as the glass is thick: too shallow for an insert, so M2 self-tappers.
+screen_screw_d = 1.7;
+screen_screw_depth = 3;
 
 /* [Openings] */
 usb_opening = [13, 6.5];    // generous: the socket's Y position is unmeasured
@@ -125,8 +129,8 @@ module forearm_cut() {
 }
 
 module stepped(lo, hi, z0, tall_z, low_z, r, split) {
-    // tall over the screen half, low over the knob half, with a 45 degree face
-    // between them so the step prints without support
+    // tall over the screen, low over the knob, with a 45 degree face between
+    // them so the cap prints without support and shrugs off a knock
     intersection() {
         rounded_block(lo, hi, z0, tall_z, r);
         union() {
@@ -142,17 +146,27 @@ module stepped(lo, hi, z0, tall_z, low_z, r, split) {
     }
 }
 
+// The base is one height all round; the extra height the screen needs belongs
+// to its lid, which is a raised cap rather than a flat plate. The outer
+// envelope is shared, so the cap and the base agree on the seam.
 module shell() {
     difference() {
         stepped(outer[0], outer[1], floor_z - floor_t,
-                top_screen + lid_t, top_hand + lid_t, corner_r, seam_x + step_chamfer);
+                top_screen + lid_t, top_hand + lid_t, corner_r, seam_x);
+        forearm_cut();
+    }
+}
+
+module base_shell() {
+    difference() {
+        rounded_block(outer[0], outer[1], floor_z - floor_t, top_hand, corner_r);
         forearm_cut();
     }
 }
 
 module cavity() {
-    stepped(inner[0], inner[1], floor_z, top_screen, top_hand,
-            max(corner_r - wall, 1), seam_x + step_chamfer);
+    rounded_block(inner[0], inner[1], floor_z, top_screen + lid_t + 1,
+                  max(corner_r - wall, 1));
 }
 
 module boss(x, y, h) {
@@ -217,15 +231,11 @@ module base() {
     difference() {
         union() {
             difference() {
-                shell();
+                base_shell();
                 cavity();
-                translate([outer[0][0] - 1, outer[0][1] - 1, top_screen])
-                    cube([seam_x - outer[0][0] + 1, size_xy[1] + 2, lid_t + 1]);
-                translate([seam_x, outer[0][1] - 1, top_hand])
-                    cube([outer[1][0] - seam_x + 1, size_xy[1] + 2, lid_t + 1]);
             }
             board_bosses();
-            lid_posts(inner[0][0], seam_x, top_screen);
+            lid_posts(inner[0][0], seam_x, top_hand);
             lid_posts(seam_x, inner[1][0], top_hand);
             strap_lugs();
         }
@@ -238,7 +248,7 @@ module lid(x0, x1, top) {
         intersection() {
             shell();
             translate([x0, outer[0][1] - 1, top])
-                cube([x1 - x0, size_xy[1] + 2, lid_t + 1]);
+                cube([x1 - x0, size_xy[1] + 2, lid_t]);
         }
         for (x = [x0 + boss_d / 2 + 1, x1 - boss_d / 2 - 1],
              y = [inner[0][1] + boss_d / 2, inner[1][1] - boss_d / 2])
@@ -260,28 +270,56 @@ module lid_hand() {
 }
 
 module lid_elbow() {
+    // A raised cap: a flange that lands on the base's rim, walls and a roof
+    // over the screen, and the screen hung from that roof on its own holes.
+    // The screen sits lower than the flange, so the flange is cut away over
+    // it. The hand end of the roof ramps down to the flange, which both
+    // closes the cap and keeps the slope printable.
     lit = [glass[0] - 2 * 2.55, glass[1] - glass_lip];
     lit_at = [screen_at[0] + glass_inset[0] + 2.55,
               screen_at[1] + glass_inset[1] + glass_lip];
     difference() {
         union() {
-            lid(outer[0][0] - 1, seam_x, top_screen);
+            difference() {
+                intersection() {
+                    shell();
+                    translate([outer[0][0] - 1, outer[0][1] - 1, top_hand])
+                        cube([seam_x - outer[0][0] + 1, size_xy[1] + 2,
+                              top_screen + lid_t - top_hand]);
+                }
+                rounded_block(inner[0], inner[1], top_hand + lid_t,
+                              top_screen, max(corner_r - wall, 1));
+            }
             for (x = [screen_at[0] + screen_hole_inset[0],
                       screen_at[0] + screen_pcb[0] - screen_hole_inset[0]],
                  y = [screen_at[1] + screen_hole_inset[1],
                       screen_at[1] + screen_pcb[1] - screen_hole_inset[1]])
-                translate([x, y, top_screen - screen_post()])
-                    difference() {
-                        cylinder(d = boss_d, h = screen_post());
-                        translate([0, 0, -1]) cylinder(d = insert_d, h = insert_depth + 1);
-                    }
+                translate([x, y, top_screen - screen_glass_t])
+                    cylinder(d = boss_d, h = screen_glass_t);
         }
+        // the flange is a frame, not a plate: the ESP and the MPU stand up
+        // into this level, and the screen pokes right through it
+        rounded_block([inner[0][0] + flange_w, inner[0][1] + flange_w],
+                      [seam_x - (top_screen - top_hand) - 2, inner[1][1] - flange_w],
+                      top_hand - 1, top_hand + lid_t + 1, corner_r);
+        translate([screen_at[0] - 1, screen_at[1] - 1, top_hand - 1])
+            cube([screen_pcb[0] + 2, screen_pcb[1] + 2, lid_t + 2]);
         translate([lit_at[0] + window_margin, lit_at[1] + window_margin, top_screen - 1])
             cube([lit[0] - 2 * window_margin, lit[1] - 2 * window_margin, lid_t + 2]);
+        for (x = [screen_at[0] + screen_hole_inset[0],
+                  screen_at[0] + screen_pcb[0] - screen_hole_inset[0]],
+             y = [screen_at[1] + screen_hole_inset[1],
+                  screen_at[1] + screen_pcb[1] - screen_hole_inset[1]])
+            translate([x, y, top_screen - screen_glass_t - 1])
+                cylinder(d = screen_screw_d, h = screen_screw_depth + 1);
+        for (x = [inner[0][0] + boss_d / 2 + 1, seam_x - boss_d / 2 - 1],
+             y = [inner[0][1] + boss_d / 2, inner[1][1] - boss_d / 2])
+            translate([x, y, top_hand - 1]) {
+                cylinder(d = screw_d, h = lid_t + 2);
+                translate([0, 0, lid_t + 1 - 1.2]) cylinder(d = screw_head_d, h = 1.4);
+            }
     }
 }
-
-function screen_post() = top_screen - (screen_rise + screen_pcb_t);
 
 module assembly() {
     color("DimGray") base();

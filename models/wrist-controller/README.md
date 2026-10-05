@@ -20,13 +20,21 @@ arm, Z up. Measurements off the bench go straight into the parameter block.
 | Encoder shaft | X 78.2, Y 13.2 | four readings closing within 0.35 |
 | Screen PCB | corner at 0.1, 3.5 | rough; overhangs the back edge by 7 |
 
-## Stepped top
+## Flat base, raised screen lid
 
-Two ceilings. The screen sets the tall half at 8.5 + 1.2 + 1.8 + slack above
-the board; the knob half stops at `hand_top` 8.5, because buttons and knob are
-meant to stand proud of it — the button bodies pass through Ø7.5 holes and the
-knob through a Ø17 one. A 45° face joins the two so the step prints without
-support. Case: **24.5 mm at the screen, 19.5 mm at the knob.**
+The base is one height all round: its rim stops at `hand_top` 8.5 above the
+board, which is all the knob half needs, because buttons and knob are meant to
+stand proud of it — the button bodies pass through Ø7.5 holes and the knob
+through a Ø17 one.
+
+The extra height the screen wants belongs to its lid instead. The elbow lid is
+a raised cap: a flange that lands on the base's rim, walls, and a roof 13.5 mm
+above the board with the window in it. Its hand end ramps down to the flange at
+45°, so it prints without support and meets the flat hand lid flush. Case:
+**24.5 mm over the screen, 19.5 mm over the knob.**
+
+The flange is a frame, not a plate — the ESP and the MPU stand up into that
+level, and the screen passes right through it.
 
 ## Two lids
 
@@ -35,8 +43,11 @@ lid covers buttons and knob and stays shut. Splitting at X 46 means the elbow
 lid opens without disturbing the knob.
 
 The screen is **not** fixed to the perfboard — it floats on wires, so it
-mounts to the elbow lid on four bosses at its own Ø3.5 holes, and the window
-is cut relative to those, not to the green board.
+mounts to the elbow lid at its own Ø3.5 holes, and the window is cut relative
+to those, not to the green board. Its glass sits against the roof's inner
+face, which leaves only glass-thickness of pad above the PCB — too shallow for
+a heat-set insert, so those four are M2 self-tappers into Ø1.7 pilots. The
+case's own lid screws are unchanged: M2 into heat-set inserts.
 
 The knob opening is Ø17 clearance around the Ø14.5 knob, with no hole for the
 bush: the bush top sits 11 mm above the board, below the lid's inner face, so
@@ -73,6 +84,6 @@ mise run build wrist-controller
 
 ## Status
 
-draft — nothing printed. Case is 101.5 × 43.1, stepped 24.5 mm at the screen
-to 19.5 mm at the knob. Shell, lids, bosses, openings and strap lugs; no lip
+draft — nothing printed. Case is 101.5 × 43.1, 19.5 mm tall with the screen
+cap rising to 24.5 mm. Shell, lids, bosses, openings and strap lugs; no lip
 seal or edge rounding yet.
