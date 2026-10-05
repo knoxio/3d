@@ -58,7 +58,7 @@ window_margin = 0.8;        // window cut back from the lit area
 /* [Case] */
 clear_elbow = 5;            // board edge to the inner wall
 clear_front = 2.6;
-clear_back = 6.5;           // covers the screen's 7 mm overhang
+clear_back = 7.5;           // the screen overhangs the board's back edge by 7
 clear_hand = 3.5;
 wall = 2;
 floor_t = 2;
@@ -82,16 +82,16 @@ screen_screw_d = 1.7;
 screen_screw_depth = 3;
 
 /* [Openings] */
-usb_opening = [13, 6.5];    // generous: the socket's Y position is unmeasured
-usb_y = 15;
+usb_opening = [13, 6.5];    // generous: the socket's width is assumed, not measured
+usb_socket_w = 9;           // assumed; the measured gap is to its back edge
+usb_y = green[1] - 7.5 - usb_socket_w / 2;
 wire_exit_d = 6;
 wire_exit = [2, 15];
-strap_w = 24;               // velcro band width
 strap_gap = 3.5;            // slot height: band thickness plus slack
-strap_lug_len = 52;         // along the arm
 strap_lug_h = 13;           // down the flank, so the band hides the case's height
-strap_bar = 3.0;            // the bar the band pulls against
-strap_slot_len = 34;        // the opening itself
+strap_bar = 4.0;            // the bar the band pulls against
+strap_slot_len = 52;        // the opening: far wider than the 24 mm band, so
+                            // the pull is spread along the flank
 
 $fa = 2;
 $fs = 0.4;
@@ -302,8 +302,12 @@ module lid_elbow() {
         rounded_block([inner[0][0] + flange_w, inner[0][1] + flange_w],
                       [seam_x - (top_screen - top_hand) - 2, inner[1][1] - flange_w],
                       top_hand - 1, top_hand + lid_t + 1, corner_r);
-        translate([screen_at[0] - 1, screen_at[1] - 1, top_hand - 1])
-            cube([screen_pcb[0] + 2, screen_pcb[1] + 2, lid_t + 2]);
+        intersection() {
+            translate([screen_at[0] - 1, screen_at[1] - 1, top_hand - 1])
+                cube([screen_pcb[0] + 2, screen_pcb[1] + 2, lid_t + 2]);
+            rounded_block(inner[0], inner[1], top_hand - 2, top_hand + lid_t + 2,
+                          max(corner_r - wall, 1));
+        }
         translate([lit_at[0] + window_margin, lit_at[1] + window_margin, top_screen - 1])
             cube([lit[0] - 2 * window_margin, lit[1] - 2 * window_margin, lid_t + 2]);
         for (x = [screen_at[0] + screen_hole_inset[0],

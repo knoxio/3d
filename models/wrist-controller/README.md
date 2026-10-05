@@ -19,6 +19,7 @@ arm, Z up. Measurements off the bench go straight into the parameter block.
 | Buttons | X 60.5, Y 8.4 / 16.2 / 24.0, Ø6 | derived; gaps disagree by ~1.4, holes are Ø7.5 |
 | Encoder shaft | X 78.2, Y 13.2 | four readings closing within 0.35 |
 | Screen PCB | corner at 0.1, 3.5 | rough; overhangs the back edge by 7 |
+| USB-C | centre Y 18.0 | 7.5 gap to the board's back edge, Ø9 socket assumed |
 
 ## Flat base, raised screen lid
 
@@ -60,6 +61,9 @@ is a tall plate standing `strap_gap` off the flank on a post at either end: the
 band threads up the gap behind it, open top and bottom, and covers the case's
 height on the way up. Lugs at the ends would run the band along the arm.
 
+The opening is 52 mm, far wider than the 24 mm band, so the pull is spread
+along the flank rather than concentrated on two short posts.
+
 ## Battery
 
 Outside the case, under the band, so it can be swapped mid-event. A wire
@@ -70,7 +74,9 @@ no power switch inside.
 
 - `forearm_r` 40 mm is a guess; the underside curve needs the real forearm.
 - Wire space under the board is 5.5 mm, which the build was measured down to.
-- `usb_y` 15 is a guess — the socket's position across the board is unmeasured.
+- The USB-C socket's *width* is assumed at 9 mm; its position comes from the
+  measured 7.5 mm gap to the board's back edge. The opening is 13 mm wide, so
+  the assumption has ~2 mm of slack each side.
 - Screen position is rough (±1 mm), which is why the window has 0.8 mm margin
   and the lit area is derived rather than measured directly.
 - The on-screen C/B/A labels will not line up with the buttons: the screen
@@ -84,6 +90,6 @@ mise run build wrist-controller
 
 ## Status
 
-draft — nothing printed. Case is 101.5 × 43.1, 19.5 mm tall with the screen
+draft — nothing printed. Case is 101.5 × 44.1, 19.5 mm tall with the screen
 cap rising to 24.5 mm. Shell, lids, bosses, openings and strap lugs; no lip
 seal or edge rounding yet.
