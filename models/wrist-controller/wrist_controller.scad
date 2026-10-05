@@ -67,7 +67,6 @@ ceiling_slack = 1.5;        // above the screen, the tallest thing inside
 flange_w = 8;               // the cap's landing on the base's rim
 hand_top = 8.5;             // board to the lid over buttons and knob: they stand proud
 corner_r = 4;
-forearm_r = 40;             // underside curve; measure and correct
 seam_x = 46;                // lid split, clear of screen and buttons
 
 /* [Fixings] */
@@ -85,8 +84,8 @@ screen_screw_depth = 3;
 usb_opening = [13, 6.5];    // generous: the socket's width is assumed, not measured
 usb_socket_w = 9;           // assumed; the measured gap is to its back edge
 usb_y = green[1] - 7.5 - usb_socket_w / 2;
-wire_exit_d = 6;
-wire_exit = [2, 15];
+wire_exit_d = 3;            // two wires out to the battery
+wire_exit = [8, -0.6];      // centre: the front elbow corner, clear of the post
 strap_gap = 3.5;            // slot height: band thickness plus slack
 strap_lug_drop = 1.5;       // how far below the lid the lug's top sits
 strap_bar = 4.0;            // the bar the band pulls against
@@ -124,13 +123,6 @@ module rounded_block(lo, hi, z0, z1, r) {
         translate([x, y, z0]) cylinder(r = r, h = z1 - z0);
 }
 
-module forearm_cut() {
-    // the underside curls around the arm; the cylinder runs along X
-    translate([0, (outer[0][1] + outer[1][1]) / 2, floor_z - floor_t - forearm_r + 2])
-        rotate([0, 90, 0])
-            cylinder(r = forearm_r, h = size_xy[0] + 40, center = true);
-}
-
 module stepped(lo, hi, z0, tall_z, low_z, r, split) {
     // tall over the screen, low over the knob, with a 45 degree face between
     // them so the cap prints without support and shrugs off a knock
@@ -153,18 +145,12 @@ module stepped(lo, hi, z0, tall_z, low_z, r, split) {
 // to its lid, which is a raised cap rather than a flat plate. The outer
 // envelope is shared, so the cap and the base agree on the seam.
 module shell() {
-    difference() {
-        stepped(outer[0], outer[1], floor_z - floor_t,
-                top_screen + lid_t, top_hand + lid_t, corner_r, seam_x);
-        forearm_cut();
-    }
+    stepped(outer[0], outer[1], floor_z - floor_t,
+            top_screen + lid_t, top_hand + lid_t, corner_r, seam_x);
 }
 
 module base_shell() {
-    difference() {
-        rounded_block(outer[0], outer[1], floor_z - floor_t, top_hand, corner_r);
-        forearm_cut();
-    }
+    rounded_block(outer[0], outer[1], floor_z - floor_t, top_hand, corner_r);
 }
 
 module cavity() {
