@@ -287,8 +287,10 @@ module lid_elbow() {
                         cube([seam_x - outer[0][0] + 1, size_xy[1] + 2,
                               top_screen + lid_t - top_hand]);
                 }
-                rounded_block(inner[0], inner[1], top_hand + lid_t,
-                              top_screen, max(corner_r - wall, 1));
+                // stop short of the ramp, or the cap loses its hand-end wall
+                rounded_block(inner[0],
+                              [seam_x - (top_screen - top_hand) - wall, inner[1][1]],
+                              top_hand + lid_t, top_screen, max(corner_r - wall, 1));
             }
             for (x = [screen_at[0] + screen_hole_inset[0],
                       screen_at[0] + screen_pcb[0] - screen_hole_inset[0]],
