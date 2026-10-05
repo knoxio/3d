@@ -63,7 +63,7 @@ wall = 2;
 floor_t = 2;
 lid_t = 2;
 ceiling_slack = 1.5;        // above the screen, the tallest thing inside
-flange_w = 8;               // the cap's landing on the base's rim
+tab_d = 10;                 // the cap's screw tabs, its only landing on the rim
 hand_top = 8.5;             // board to the lid over buttons and knob: they stand proud
 corner_r = 4;
 seam_x = 46;                // lid split, clear of screen and buttons
@@ -74,10 +74,10 @@ insert_depth = 4;
 screw_d = 2.2;
 screw_head_d = 4;
 boss_d = 6;
-// The screen hangs with its glass against the roof, so its pads are only as
-// deep as the glass is thick: too shallow for an insert, so M2 self-tappers.
-screen_screw_d = 1.7;
-screen_screw_depth = 3;
+// The screen's glass sits straight against the roof; these pins pass through
+// its own Ø3.5 holes and are flattened with a hot iron to hold it there.
+screen_pin_d = 3.2;
+screen_stake = 1.5;         // how far a pin stands proud of the PCB
 
 /* [Openings] */
 usb_opening = [13, 6.5];    // generous: the socket's width is assumed, not measured
@@ -264,14 +264,19 @@ module lid_hand() {
 }
 
 module lid_elbow() {
-    // A raised cap: a flange that lands on the base's rim, walls and a roof
-    // over the screen, and the screen hung from that roof on its own holes.
-    // The screen sits lower than the flange, so the flange is cut away over
-    // it. The hand end of the roof ramps down to the flange, which both
-    // closes the cap and keeps the slope printable.
+    // A raised cap over the screen: walls straight off the base's rim, a roof
+    // with the window in it, and the hand end ramping down at 45 degrees so
+    // the slope prints without support. It lands on the rim only at four
+    // screw tabs — a continuous flange would be a 6 mm ledge all the way round
+    // the inside, which is an overhang the printer has to be told about.
+    //
+    // The screen's glass sits straight against the roof's inner face. Four
+    // pins pass through its mounting holes and are flattened with a hot iron;
+    // a blob of hot glue instead works just as well.
     lit = [glass[0] - 2 * 2.55, glass[1] - glass_lip];
     lit_at = [screen_at[0] + glass_inset[0] + 2.55,
               screen_at[1] + glass_inset[1] + glass_lip];
+    pin_len = screen_glass_t + screen_pcb_t + screen_stake;
     difference() {
         union() {
             difference() {
@@ -284,34 +289,20 @@ module lid_elbow() {
                 // stop short of the ramp, or the cap loses its hand-end wall
                 rounded_block(inner[0],
                               [seam_x - (top_screen - top_hand) - wall, inner[1][1]],
-                              top_hand + lid_t, top_screen, max(corner_r - wall, 1));
+                              top_hand - 1, top_screen, max(corner_r - wall, 1));
             }
-            for (x = [screen_at[0] + screen_hole_inset[0],
-                      screen_at[0] + screen_pcb[0] - screen_hole_inset[0]],
-                 y = [screen_at[1] + screen_hole_inset[1],
-                      screen_at[1] + screen_pcb[1] - screen_hole_inset[1]])
-                translate([x, y, top_screen - screen_glass_t])
-                    cylinder(d = boss_d, h = screen_glass_t);
-        }
-        // the flange is a frame, not a plate: the ESP and the MPU stand up
-        // into this level, and the screen pokes right through it
-        rounded_block([inner[0][0] + flange_w, inner[0][1] + flange_w],
-                      [seam_x - (top_screen - top_hand) - 2, inner[1][1] - flange_w],
-                      top_hand - 1, top_hand + lid_t + 1, corner_r);
-        intersection() {
-            translate([screen_at[0] - 1, screen_at[1] - 1, top_hand - 1])
-                cube([screen_pcb[0] + 2, screen_pcb[1] + 2, lid_t + 2]);
-            rounded_block(inner[0], inner[1], top_hand - 2, top_hand + lid_t + 2,
-                          max(corner_r - wall, 1));
+            intersection() {
+                shell();
+                for (x = [inner[0][0] + boss_d / 2 + 1, seam_x - boss_d / 2 - 1],
+                     y = [inner[0][1] + boss_d / 2, inner[1][1] - boss_d / 2])
+                    translate([x, y, top_hand]) cylinder(d = tab_d, h = lid_t);
+            }
+            for (p = screen_holes())
+                translate([p[0], p[1], top_screen - pin_len])
+                    cylinder(d = screen_pin_d, h = pin_len);
         }
         translate([lit_at[0] + window_margin, lit_at[1] + window_margin, top_screen - 1])
             cube([lit[0] - 2 * window_margin, lit[1] - 2 * window_margin, lid_t + 2]);
-        for (x = [screen_at[0] + screen_hole_inset[0],
-                  screen_at[0] + screen_pcb[0] - screen_hole_inset[0]],
-             y = [screen_at[1] + screen_hole_inset[1],
-                  screen_at[1] + screen_pcb[1] - screen_hole_inset[1]])
-            translate([x, y, top_screen - screen_glass_t - 1])
-                cylinder(d = screen_screw_d, h = screen_screw_depth + 1);
         for (x = [inner[0][0] + boss_d / 2 + 1, seam_x - boss_d / 2 - 1],
              y = [inner[0][1] + boss_d / 2, inner[1][1] - boss_d / 2])
             translate([x, y, top_hand - 1]) {
@@ -321,8 +312,14 @@ module lid_elbow() {
     }
 }
 
-// Every piece in the orientation it prints in, laid out on one bed. The cap
-// goes roof-down: the other way up its roof would be a 44 mm ceiling.
+function screen_holes() = [
+    for (x = [screen_at[0] + screen_hole_inset[0],
+              screen_at[0] + screen_pcb[0] - screen_hole_inset[0]],
+         y = [screen_at[1] + screen_hole_inset[1],
+              screen_at[1] + screen_pcb[1] - screen_hole_inset[1]]) [x, y]
+];
+
+
 module plate() {
     base_w = size_xy[1] + 2 * (strap_gap + strap_bar);
     row2 = base_w + plate_gap;
