@@ -34,8 +34,10 @@ above the board with the window in it. Its hand end ramps down to the flange at
 45°, so it prints without support and meets the flat hand lid flush. Case:
 **24.5 mm over the screen, 19.5 mm over the knob.**
 
-The flange is a frame, not a plate — the ESP and the MPU stand up into that
-level, and the screen passes right through it.
+It lands on the base's rim at four screw tabs rather than a continuous flange.
+A flange would be a 6 mm ledge running right round the inside of the cap, and
+printed roof-down that is a long unsupported overhang. It also had to be cut
+away for the ESP, the MPU and the screen anyway.
 
 ## Two lids
 
@@ -45,10 +47,13 @@ lid opens without disturbing the knob.
 
 The screen is **not** fixed to the perfboard — it floats on wires, so it
 mounts to the elbow lid at its own Ø3.5 holes, and the window is cut relative
-to those, not to the green board. Its glass sits against the roof's inner
-face, which leaves only glass-thickness of pad above the PCB — too shallow for
-a heat-set insert, so those four are M2 self-tappers into Ø1.7 pilots. The
-case's own lid screws are unchanged: M2 into heat-set inserts.
+to those, not to the green board.
+
+Its glass sits straight against the roof's inner face — that face is the datum,
+not a boss. Four Ø3.2 pins pass through the mounting holes and stand 1.5 mm
+proud of the PCB; flatten them with a hot iron. A blob of hot glue instead
+works just as well, and the pins still locate it. The case's own lid screws are
+unchanged: M2 into heat-set inserts.
 
 The knob opening clears the **bush**, not the knob: Ø8.0 around the Ø6.85
 thread. The knob itself stays off until the lid is on, and its Ø14.5 skirt then
@@ -91,11 +96,11 @@ Open `out/wrist-controller/wrist_controller-plate.3mf` — all three pieces on
 one 107.5 × 109.2 mm patch of bed, each already in the orientation it prints
 in. PLA, 0.2 mm layers, 3 walls, 20% infill.
 
-Supports: **only the elbow lid needs them.** It prints roof-down, which leaves
-its flange standing proud as a 6 mm inward ledge at the top of the walls —
-paint support onto that ledge, or accept a little droop on a face that has to
-seat flat against the base's rim. The base and the hand lid print clean: the
-base's underside is flat and the strap lugs reach the bed.
+Supports: **none.** The elbow lid prints roof-down and the only overhangs left
+are its four screw tabs — a Ø10 disc each, two layers thick, at the very top of
+the walls. They print over air with a little droop and no support; paint
+support onto those four spots if the seat matters more than the time. The base
+prints flat-bottomed and the strap lugs reach the bed.
 
 ```bash
 mise run build wrist-controller
