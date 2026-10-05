@@ -21,7 +21,7 @@ black_hole_x = 85.75;       // centres, in the shared frame
 black_hole_y = [6.95, 23.05];
 
 /* [Stack heights, from the board's top face] */
-wire_space = 7.5;           // under the board, for the loom
+wire_space = 5.5;           // under the board, for the loom (dressed flat)
 button_base = 6;            // board to the underside of the button body
 button_h = 6;               // button body height
 screen_rise = 8;            // board to the underside of the screen module
@@ -80,9 +80,12 @@ usb_opening = [13, 6.5];    // generous: the socket's Y position is unmeasured
 usb_y = 15;
 wire_exit_d = 6;
 wire_exit = [2, 15];
-strap_w = 24;               // velcro band
-strap_gap = 3.5;
-strap_bar = 3;
+strap_w = 24;               // velcro band width
+strap_gap = 3.5;            // slot height: band thickness plus slack
+strap_lug_len = 52;         // along the arm
+strap_lug_h = 13;           // down the flank, so the band hides the case's height
+strap_bar = 3.0;            // the bar the band pulls against
+strap_slot_len = 34;        // the opening itself
 
 $fa = 2;
 $fs = 0.4;
@@ -148,16 +151,31 @@ module lid_posts(x0, x1) {
 }
 
 module strap_lugs() {
+    // The band crosses the arm, so it threads through the long sides. Each lug
+    // is a tall plate held off the flank by a post at either end: the band
+    // passes up the gap behind it, open top and bottom, and covers the case's
+    // height on the way. A tab on the end of the case could not do that — the
+    // band would run along the arm instead of around it.
+    mid_x = (outer[0][0] + outer[1][0]) / 2;
+    top_z = inner_top + lid_t;
+    z_hi = top_z - 1.5;
+    z_lo = z_hi - strap_lug_h;
+    bar_r = strap_bar / 2;
+    post = 4.5;
     for (side = [0, 1]) {
-        x = side ? outer[1][0] : outer[0][0];
+        y = side ? outer[1][1] : outer[0][1];
         dir = side ? 1 : -1;
-        translate([x, (outer[0][1] + outer[1][1]) / 2, inner_top + lid_t - strap_gap - strap_bar])
-            difference() {
-                translate([dir * (strap_gap + strap_bar) / 2, 0, strap_bar / 2])
-                    cube([strap_gap + strap_bar, strap_w + 2 * strap_bar, strap_bar], center = true);
-                translate([dir * strap_gap / 2, 0, -strap_bar])
-                    cube([strap_gap, strap_w, strap_bar * 3], center = true);
-            }
+        translate([mid_x, y, 0]) {
+            hull() for (x = [-1, 1] * (strap_slot_len / 2 - bar_r),
+                        z = [z_lo + bar_r, z_hi - bar_r])
+                translate([x, dir * (strap_gap + bar_r), z])
+                    sphere(r = bar_r);
+            for (x = [-1, 1] * (strap_slot_len / 2 + post / 2 - 1))
+                hull() for (z = [z_lo + bar_r, z_hi - bar_r])
+                    translate([x, dir * (strap_gap + strap_bar) / 2, z])
+                        rotate([90, 0, 0])
+                            cylinder(d = post, h = strap_gap + strap_bar + 2, center = true);
+        }
     }
 }
 

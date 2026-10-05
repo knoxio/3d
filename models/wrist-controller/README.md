@@ -34,6 +34,13 @@ The knob opening is Ø17 clearance around the Ø14.5 knob, with no hole for the
 bush: the bush top sits 11 mm above the board, below the lid's inner face, so
 nothing has to line up with it.
 
+## Strap
+
+The band crosses the arm, so the lugs are on the long sides, not the ends. Each
+is a tall plate standing `strap_gap` off the flank on a post at either end: the
+band threads up the gap behind it, open top and bottom, and covers the case's
+height on the way up. Lugs at the ends would run the band along the arm.
+
 ## Battery
 
 Outside the case, under the band, so it can be swapped mid-event. A wire
@@ -43,6 +50,7 @@ no power switch inside.
 ## Known loose ends
 
 - `forearm_r` 40 mm is a guess; the underside curve needs the real forearm.
+- Wire space under the board is 5.5 mm, which the build was measured down to.
 - `usb_y` 15 is a guess — the socket's position across the board is unmeasured.
 - Screen position is rough (±1 mm), which is why the window has 0.8 mm margin
   and the lit area is derived rather than measured directly.
@@ -57,5 +65,5 @@ mise run build wrist-controller
 
 ## Status
 
-draft — nothing printed. Shell, lids, bosses and openings only; no fillets,
-lip seal or strap lug detailing yet.
+draft — nothing printed. Case is 101.5 × 43.1 × 24.5 mm. Shell, lids, bosses,
+openings and strap lugs; no lip seal or edge rounding yet.
