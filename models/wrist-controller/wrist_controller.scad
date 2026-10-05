@@ -52,9 +52,10 @@ screen_hole_inset = [1.3, 2.55];   // from the PCB edges, x then y
 glass = [34.5, 18.6];
 glass_inset = [0.5, 8.3];   // glass corner from the PCB corner
 glass_lip = 3.8;            // unlit strip along the glass's front edge
-glass_bezel = 2.55;         // unlit border along the long edges (1.3" OLED)
+glass_bezel = 1.8;          // unlit border along the long edges
 window_margin = 0.4;        // how far the window opens past the lit area
 glass_seat = 0.4;           // roof left over the glass's edge, to hold it
+window_bevel = 1.2;         // 45 deg flare on the outside, for the viewing angle
 
 /* [Case] */
 clear_elbow = 5;            // board edge to the inner wall
@@ -131,7 +132,9 @@ assert(knob_bottom >= top_hand + lid_t, "the knob fouls the hand lid");
 assert(knob_d > bush_d + knob_clear + 2, "the knob no longer hides its hole");
 
 echo(str("window ", win_hi[0] - win_lo[0], " x ", win_hi[1] - win_lo[1],
-         " mm over a lit area of ", lit[0], " x ", lit[1]));
+         " mm over a lit area of ", lit[0], " x ", lit[1],
+         ", flaring to ", win_hi[0] - win_lo[0] + 2 * window_bevel, " x ",
+         win_hi[1] - win_lo[1] + 2 * window_bevel, " outside"));
 echo(str("case ", size_xy[0], " x ", size_xy[1],
          " x ", top_screen - floor_z + floor_t + lid_t, " mm at the screen, ",
          top_hand - floor_z + floor_t + lid_t, " mm at the knob"));
@@ -314,8 +317,18 @@ module lid_elbow() {
                 translate([p[0], p[1], top_screen - pin_len])
                     cylinder(d = screen_pin_d, h = pin_len);
         }
+        win = [win_hi[0] - win_lo[0], win_hi[1] - win_lo[1]];
         translate([win_lo[0], win_lo[1], top_screen - 1])
-            cube([win_hi[0] - win_lo[0], win_hi[1] - win_lo[1], lid_t + 2]);
+            cube([win[0], win[1], lid_t - window_bevel + 1]);
+        // the roof is 2 mm of plastic in front of the glass, so the outside of
+        // the window flares at 45 degrees to give the edges back their angle
+        hull() {
+            translate([win_lo[0], win_lo[1], top_screen + lid_t - window_bevel])
+                cube([win[0], win[1], 0.01]);
+            translate([win_lo[0] - window_bevel, win_lo[1] - window_bevel,
+                       top_screen + lid_t - 0.01])
+                cube([win[0] + 2 * window_bevel, win[1] + 2 * window_bevel, 1]);
+        }
         for (x = [inner[0][0] + boss_d / 2 + 1, seam_x - boss_d / 2 - 1],
              y = [inner[0][1] + boss_d / 2, inner[1][1] - boss_d / 2])
             translate([x, y, top_hand - 1]) {
