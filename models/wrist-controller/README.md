@@ -49,6 +49,11 @@ The screen is **not** fixed to the perfboard — it floats on wires, so it
 mounts to the elbow lid at its own Ø3.5 holes, and the window is cut relative
 to those, not to the green board.
 
+The window is **30.2 × 14.8** — the lit area opened 0.4 mm past its edge, then
+held back 0.4 mm from the glass's own edge so the roof still has something to
+seat the glass against. It is deliberately smaller than the 34.5 × 18.6 glass:
+2.55 mm down each long edge and the 3.8 mm lip are dead bezel.
+
 Its glass sits straight against the roof's inner face — that face is the datum,
 not a boss. Four Ø3.2 pins pass through the mounting holes and stand 1.5 mm
 proud of the PCB; flatten them with a hot iron. A blob of hot glue instead
@@ -85,8 +90,12 @@ charger, no power switch inside.
 - The USB-C socket's *width* is assumed at 9 mm; its position comes from the
   measured 7.5 mm gap to the board's back edge. The opening is 13 mm wide, so
   the assumption has ~2 mm of slack each side.
-- Screen position is rough (±1 mm), which is why the window has 0.8 mm margin
-  and the lit area is derived rather than measured directly.
+- The lit area is **derived, not measured**: 29.4 × 14.8, from the glass minus
+  the 3.8 mm lip that was measured and a 2.55 mm side bezel taken from the
+  1.3" OLED's spec. The window is 30.2 × 14.8. If the real display sits
+  differently inside its glass, this is the number to correct.
+- The screen's rough position (±1 mm) no longer affects the window: the window
+  and the staking pins are both derived from the same four mounting holes.
 - The on-screen C/B/A labels will not line up with the buttons: the screen
   sits ~7 mm further back than the button column. That is a firmware offset.
 
