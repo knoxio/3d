@@ -70,7 +70,7 @@ wall = 2;
 floor_t = 2;
 lid_t = 2;
 ceiling_slack = 1.5;        // above the screen, the tallest thing inside
-tab_d = 10;                 // the cap's screw tabs, its only landing on the rim
+tab_d = 7.5;                // the cap's screw tabs, its only landing on the rim
 hand_top = 8.5;             // board to the lid over buttons and knob: they stand proud
 corner_r = 4;
 seam_x = 46;                // lid split, clear of screen and buttons
@@ -152,6 +152,17 @@ function fouled_by(f) =
 assert(len([for (l = ["elbow", "hand"], f = fixings(l))
             if (len(fouled_by(f)) > 0) f]) == 0,
        "a lid post stands in a board's footprint");
+
+assert([for (f = fixings("elbow"), h = screen_holes())
+            if (norm([f[0] - h[0], f[1] - h[1]]) < (tab_d + screen_pin_d) / 2 + 0.3) f] == [],
+       "a screw tab runs into a screen pin");
+
+// A tab's top face and the screen PCB's underside are both at top_hand + lid_t,
+// so a tab reaching under the PCB would press on whatever is on its back.
+assert([for (f = fixings("elbow"))
+            if (min(f[0] + tab_d / 2, screen_at[0] + screen_pcb[0]) > max(f[0] - tab_d / 2, screen_at[0]) &&
+                min(f[1] + tab_d / 2, screen_at[1] + screen_pcb[1]) > max(f[1] - tab_d / 2, screen_at[1])) f] == [],
+       "a screw tab reaches under the screen");
 
 assert(knob_bottom >= top_hand + lid_t, "the knob fouls the hand lid");
 assert(knob_d > bush_d + knob_clear + 2, "the knob no longer hides its hole");

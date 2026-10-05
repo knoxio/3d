@@ -95,8 +95,14 @@ That leaves the seam's front corner with no room for an insert's Ø6 boss. It
 gets a Ø4 one the screw taps for itself, which clears the board by 0.6 mm. The
 other seven are M2 heat-set inserts as before.
 
-An assert checks every post against both board footprints, so this cannot come
-back quietly.
+The cap meets those posts at four Ø7.5 tabs. They were Ø10, which reached far
+enough inboard for one of them to swallow a screen pin and to sit under the
+PCB's corner — a tab's top face and the PCB's underside are both at 10.5 mm, so
+anything on the back of the board would have been pressed.
+
+Three asserts hold all of this: no post inside a board's footprint, no tab
+within reach of a screen pin, no tab under the screen. Each was checked to fail
+when the geometry is moved to break it.
 
 ## Strap
 
