@@ -197,13 +197,22 @@ the mesh or sell prints of it.
 
 ## Status
 
-v1 printed at 55 mm: good, but the 3.5 mm round bore was a 16 mm tunnel no
-keyring could curve through, the figure read too tall, and the upright
-aerials were delicate. v2 answers all three: keyring slot, plumper
-proportions with a bigger head, and the backpack split off to print flat.
-v3 flattens the soles. v4 shrinks it to 50 mm and
-fixes the helmet, which v2 had squashed by widening the whole figure: body
-and head are now reproportioned separately. Not yet printed.
+Archived: fully printed. Print feedback drove v2–v8 — keyring sizing, proportions, flat soles, sharp armpits, the flat visor
+pocket, the flat backpack pad with two locating cones, and a plain 6 mm
+keyring tube.
+
+All three parts are printed, including the v8.5 body with the plain 6 mm
+keyring tube: 5.8 mm bore, 1.4 mm of helmet above it, walls 3.0 mm front and
+2.4 mm back, sized for a 20 mm ID / 25 mm OD ring whose two coils need
+5.0 mm. Whether that ring threads easily in the hand is not recorded here.
+
+Open, and not a model problem: the facet plate printed on a holographic film
+came out with holes in the first layer, at the centre of each triangle and
+patchily elsewhere. The facet bottoms measure flat — 92 % of the triangle in
+contact within 0.01 mm of the bed, 0.007 mm at the centre — so this is first
+layer adhesion on the film, with a 0.1 mm initial layer leaving no margin for
+its waviness. Suggested there: initial layer 0.15–0.16 mm, fan off for the
+first layers, a little more flow, glue stick.
 
 ## Head-only QR variant
 
