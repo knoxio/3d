@@ -54,6 +54,12 @@ its edge, then held back 0.4 mm from the glass's own edge so the roof still has
 something to seat the glass against. It is smaller than the 34.5 × 18.6 glass
 because 1.8 mm down each long edge and the 3.8 mm lip are dead bezel.
 
+**PURGE** is sunk 0.4 mm into the face below the window — two layers, not
+raised, because that face prints against the bed. The letters therefore start
+a couple of layers up: swap filament at layer 3 and they come out in their own
+colour, with the rest of the lid in the second colour and only its top face in
+the first.
+
 Outside, it flares at 45° to **34.1 × 17.2**. The roof is 2 mm of plastic
 standing in front of the glass, which costs the display its viewing angle at
 the edges; the bevel takes 1.2 of those 2 mm back and leaves 0.8 mm of straight

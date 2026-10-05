@@ -56,6 +56,10 @@ glass_bezel = 1.8;          // unlit border along the long edges
 window_margin = 0.4;        // how far the window opens past the lit area
 glass_seat = 0.4;           // roof left over the glass's edge, to hold it
 window_bevel = 1.2;         // 45 deg flare on the outside, for the viewing angle
+label = "PURGE";
+label_size = 6;             // mm, cap height
+label_depth = 0.4;          // two layers at 0.2, for a filament swap
+label_font = "Liberation Sans:style=Bold";
 
 /* [Case] */
 clear_elbow = 5;            // board edge to the inner wall
@@ -335,6 +339,14 @@ module lid_elbow() {
                 cylinder(d = screw_d, h = lid_t + 2);
                 translate([0, 0, lid_t + 1 - 1.2]) cylinder(d = screw_head_d, h = 1.4);
             }
+        // Sunk into the face, not raised off it: this face prints against the
+        // bed, so the letters start a couple of layers up and a filament swap
+        // there puts them in their own colour.
+        translate([(win_lo[0] + win_hi[0]) / 2, (inner[0][1] + win_lo[1]) / 2,
+                   top_screen + lid_t - label_depth])
+            linear_extrude(label_depth + 1)
+                text(label, size = label_size, font = label_font,
+                     halign = "center", valign = "center");
     }
 }
 
