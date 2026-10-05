@@ -20,6 +20,14 @@ arm, Z up. Measurements off the bench go straight into the parameter block.
 | Encoder shaft | X 78.2, Y 13.2 | four readings closing within 0.35 |
 | Screen PCB | corner at 0.1, 3.5 | rough; overhangs the back edge by 7 |
 
+## Stepped top
+
+Two ceilings. The screen sets the tall half at 8.5 + 1.2 + 1.8 + slack above
+the board; the knob half stops at `hand_top` 8.5, because buttons and knob are
+meant to stand proud of it — the button bodies pass through Ø7.5 holes and the
+knob through a Ø17 one. A 45° face joins the two so the step prints without
+support. Case: **24.5 mm at the screen, 19.5 mm at the knob.**
+
 ## Two lids
 
 The elbow lid carries the screen and comes off for reset and boot; the hand
@@ -65,5 +73,6 @@ mise run build wrist-controller
 
 ## Status
 
-draft — nothing printed. Case is 101.5 × 43.1 × 24.5 mm. Shell, lids, bosses,
-openings and strap lugs; no lip seal or edge rounding yet.
+draft — nothing printed. Case is 101.5 × 43.1, stepped 24.5 mm at the screen
+to 19.5 mm at the knob. Shell, lids, bosses, openings and strap lugs; no lip
+seal or edge rounding yet.
