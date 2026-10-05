@@ -68,13 +68,13 @@ cantilevering off its posts, and the band cannot slip out underneath.
 
 ## Battery
 
-Outside the case, under the band, so it can be swapped mid-event. A wire
-leaves through the floor near the elbow end to a JST connector. No charger,
-no power switch inside.
+Outside the case, under the band, so it can be swapped mid-event. Two wires
+leave through a Ø3 hole in the floor at the front elbow corner — out of the
+band's way, and clear of both the corner post and the board's boss. No
+charger, no power switch inside.
 
 ## Known loose ends
 
-- `forearm_r` 40 mm is a guess; the underside curve needs the real forearm.
 - Wire space under the board is 5.5 mm, which the build was measured down to.
 - The USB-C socket's *width* is assumed at 9 mm; its position comes from the
   measured 7.5 mm gap to the board's back edge. The opening is 13 mm wide, so
@@ -94,8 +94,7 @@ Supports: **only the elbow lid needs them.** It prints roof-down, which leaves
 its flange standing proud as a 6 mm inward ledge at the top of the walls —
 paint support onto that ledge, or accept a little droop on a face that has to
 seat flat against the base's rim. The base and the hand lid print clean: the
-base's underside is two flat rails either side of a shallow 2 mm arch, and the
-strap lugs now reach the bed.
+base's underside is flat and the strap lugs reach the bed.
 
 ```bash
 mise run build wrist-controller
@@ -104,5 +103,5 @@ mise run build wrist-controller
 ## Status
 
 draft — nothing printed. Case is 101.5 × 44.1, 19.5 mm tall with the screen
-cap rising to 24.5 mm. Shell, lids, bosses, openings and strap lugs; no lip
-seal or edge rounding yet.
+cap rising to 24.5 mm, flat underside. Shell, lids, bosses, openings and strap
+lugs; no lip seal or edge rounding yet.
