@@ -62,7 +62,9 @@ band threads up the gap behind it, open top and bottom, and covers the case's
 height on the way up. Lugs at the ends would run the band along the arm.
 
 The opening is 52 mm, far wider than the 24 mm band, so the pull is spread
-along the flank rather than concentrated on two short posts.
+along the flank rather than concentrated on two short posts. The plate runs
+down to the plane the case stands on, so it prints off the bed instead of
+cantilevering off its posts, and the band cannot slip out underneath.
 
 ## Battery
 
@@ -82,7 +84,18 @@ no power switch inside.
 - The on-screen C/B/A labels will not line up with the buttons: the screen
   sits ~7 mm further back than the button column. That is a firmware offset.
 
-## Build
+## Print
+
+Open `out/wrist-controller/wrist_controller-plate.3mf` — all three pieces on
+one 107.5 × 109.2 mm patch of bed, each already in the orientation it prints
+in. PLA, 0.2 mm layers, 3 walls, 20% infill.
+
+Supports: **only the elbow lid needs them.** It prints roof-down, which leaves
+its flange standing proud as a 6 mm inward ledge at the top of the walls —
+paint support onto that ledge, or accept a little droop on a face that has to
+seat flat against the base's rim. The base and the hand lid print clean: the
+base's underside is two flat rails either side of a shallow 2 mm arch, and the
+strap lugs now reach the bed.
 
 ```bash
 mise run build wrist-controller

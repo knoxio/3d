@@ -6,9 +6,9 @@
 // frame, so numbers here can be compared directly against calipers on the
 // bench.
 
-// parts: base lid-elbow lid-hand
+// parts: base lid-elbow lid-hand plate
 
-part = "assembly"; // [assembly, base, lid-elbow, lid-hand]
+part = "assembly"; // [assembly, base, lid-elbow, lid-hand, plate]
 
 /* [Boards] */
 green = [70, 30, 1.5];      // perfboard, X by Y by thickness
@@ -88,10 +88,13 @@ usb_y = green[1] - 7.5 - usb_socket_w / 2;
 wire_exit_d = 6;
 wire_exit = [2, 15];
 strap_gap = 3.5;            // slot height: band thickness plus slack
-strap_lug_h = 13;           // down the flank, so the band hides the case's height
+strap_lug_drop = 1.5;       // how far below the lid the lug's top sits
 strap_bar = 4.0;            // the bar the band pulls against
 strap_slot_len = 52;        // the opening: far wider than the 24 mm band, so
                             // the pull is spread along the flank
+
+bed = [256, 256];           // P1S build plate
+plate_gap = 6;              // between pieces on the bed
 
 $fa = 2;
 $fs = 0.4;
@@ -195,10 +198,13 @@ module strap_lugs() {
     // passes up the gap behind it, open top and bottom, and covers the case's
     // height on the way. A tab on the end of the case could not do that — the
     // band would run along the arm instead of around it.
+    //
+    // The plate runs the full height of the case, down to the same plane the
+    // case stands on, so it prints off the bed instead of cantilevering off
+    // its posts, and the band cannot slip out under it.
     mid_x = (outer[0][0] + outer[1][0]) / 2;
-    top_z = top_hand + lid_t;   // the low half sets it, so the lug clears both lids
-    z_hi = top_z - 1.5;
-    z_lo = z_hi - strap_lug_h;
+    z_hi = top_hand + lid_t - strap_lug_drop;
+    z_lo = floor_z - floor_t;
     bar_r = strap_bar / 2;
     post = 4.5;
     for (side = [0, 1]) {
@@ -210,7 +216,7 @@ module strap_lugs() {
                 translate([x, dir * (strap_gap + bar_r), z])
                     sphere(r = bar_r);
             for (x = [-1, 1] * (strap_slot_len / 2 + post / 2 - 1))
-                hull() for (z = [z_lo + bar_r, z_hi - bar_r])
+                hull() for (z = [z_lo + post / 2, z_hi - post / 2])
                     translate([x, dir * (strap_gap + strap_bar) / 2, z])
                         rotate([90, 0, 0])
                             cylinder(d = post, h = strap_gap + strap_bar + 2, center = true);
@@ -327,6 +333,26 @@ module lid_elbow() {
     }
 }
 
+// Every piece in the orientation it prints in, laid out on one bed. The cap
+// goes roof-down: the other way up its roof would be a 44 mm ceiling.
+module plate() {
+    base_w = size_xy[1] + 2 * (strap_gap + strap_bar);
+    row2 = base_w + plate_gap;
+    cap_len = seam_x - outer[0][0];
+    hand_len = outer[1][0] - seam_x;
+    used = [max(size_xy[0], hand_len + plate_gap + cap_len), row2 + size_xy[1]];
+    assert(used[0] <= bed[0] && used[1] <= bed[1], "plate does not fit one bed");
+    echo(str("plate ", used[0], " x ", used[1], " mm"));
+
+    translate([-outer[0][0], -outer[0][1] + strap_gap + strap_bar, -(floor_z - floor_t)])
+        base();
+    translate([-seam_x, -outer[0][1] + row2, -top_hand])
+        lid_hand();
+    translate([-outer[0][0] + hand_len + plate_gap, outer[1][1] + row2,
+               top_screen + lid_t])
+        rotate([180, 0, 0]) lid_elbow();
+}
+
 module assembly() {
     color("DimGray") base();
     color("SlateGray") lid_elbow();
@@ -340,3 +366,4 @@ if (part == "assembly") assembly();
 else if (part == "base") base();
 else if (part == "lid-elbow") lid_elbow();
 else if (part == "lid-hand") lid_hand();
+else if (part == "plate") plate();
