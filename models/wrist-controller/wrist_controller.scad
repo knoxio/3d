@@ -52,7 +52,9 @@ screen_hole_inset = [1.3, 2.55];   // from the PCB edges, x then y
 glass = [34.5, 18.6];
 glass_inset = [0.5, 8.3];   // glass corner from the PCB corner
 glass_lip = 3.8;            // unlit strip along the glass's front edge
-window_margin = 0.8;        // window cut back from the lit area
+glass_bezel = 2.55;         // unlit border along the long edges (1.3" OLED)
+window_margin = 0.4;        // how far the window opens past the lit area
+glass_seat = 0.4;           // roof left over the glass's edge, to hold it
 
 /* [Case] */
 clear_elbow = 5;            // board edge to the inner wall
@@ -111,11 +113,25 @@ top_screen = screen_rise + screen_pcb_t + screen_glass_t + screen_slack + ceilin
 top_hand = hand_top;
 inner_top = top_screen;
 floor_z = -(wire_space + green[2]);           // inner floor, below the board
+
+// The window shows the lit area, opened a little past it and then held back
+// from the glass's own edge so the roof still has something to seat the glass
+// against. Both the window and the staking pins come off the same four
+// mounting holes, so neither depends on where the screen floats above the
+// board.
+glass_at = [screen_at[0] + glass_inset[0], screen_at[1] + glass_inset[1]];
+lit_at = [glass_at[0] + glass_bezel, glass_at[1] + glass_lip];
+lit = [glass[0] - 2 * glass_bezel, glass[1] - glass_lip];
+win_lo = [for (i = [0, 1]) max(lit_at[i] - window_margin, glass_at[i] + glass_seat)];
+win_hi = [for (i = [0, 1]) min(lit_at[i] + lit[i] + window_margin,
+                               glass_at[i] + glass[i] - glass_seat)];
 size_xy = [outer[1][0] - outer[0][0], outer[1][1] - outer[0][1]];
 
 assert(knob_bottom >= top_hand + lid_t, "the knob fouls the hand lid");
 assert(knob_d > bush_d + knob_clear + 2, "the knob no longer hides its hole");
 
+echo(str("window ", win_hi[0] - win_lo[0], " x ", win_hi[1] - win_lo[1],
+         " mm over a lit area of ", lit[0], " x ", lit[1]));
 echo(str("case ", size_xy[0], " x ", size_xy[1],
          " x ", top_screen - floor_z + floor_t + lid_t, " mm at the screen, ",
          top_hand - floor_z + floor_t + lid_t, " mm at the knob"));
@@ -273,9 +289,6 @@ module lid_elbow() {
     // The screen's glass sits straight against the roof's inner face. Four
     // pins pass through its mounting holes and are flattened with a hot iron;
     // a blob of hot glue instead works just as well.
-    lit = [glass[0] - 2 * 2.55, glass[1] - glass_lip];
-    lit_at = [screen_at[0] + glass_inset[0] + 2.55,
-              screen_at[1] + glass_inset[1] + glass_lip];
     pin_len = screen_glass_t + screen_pcb_t + screen_stake;
     difference() {
         union() {
@@ -301,8 +314,8 @@ module lid_elbow() {
                 translate([p[0], p[1], top_screen - pin_len])
                     cylinder(d = screen_pin_d, h = pin_len);
         }
-        translate([lit_at[0] + window_margin, lit_at[1] + window_margin, top_screen - 1])
-            cube([lit[0] - 2 * window_margin, lit[1] - 2 * window_margin, lid_t + 2]);
+        translate([win_lo[0], win_lo[1], top_screen - 1])
+            cube([win_hi[0] - win_lo[0], win_hi[1] - win_lo[1], lid_t + 2]);
         for (x = [inner[0][0] + boss_d / 2 + 1, seam_x - boss_d / 2 - 1],
              y = [inner[0][1] + boss_d / 2, inner[1][1] - boss_d / 2])
             translate([x, y, top_hand - 1]) {
