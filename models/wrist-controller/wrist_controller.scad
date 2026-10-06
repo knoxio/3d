@@ -63,7 +63,12 @@ screen_hole_d = 3.5;
 screen_hole_x = 0.8 + screen_hole_d / 2;
 screen_hole_y = [0.5 + screen_hole_d / 2, 1.5 + screen_hole_d / 2];
 glass = [34.5, 18.6];
-glass_inset = [0.5, 4.5];   // glass corner from the PCB corner, measured
+// The lip faces the BACK of the case, not the front: the measured 4.5 gap
+// between the PCB's edge and the glass is at the back, so from the front it is
+// 33.5 - 4.5 - 18.6. Getting this backwards put the window 5.9 mm forward of
+// the screen, which only showed up on a print.
+glass_edge = 4.5;           // measured, at the back
+glass_inset = [0.5, screen_pcb[1] - glass_edge - glass[1]];
 glass_lip = 6.1;            // glass edge to the first lit pixel, measured
 glass_seat = 0.4;           // roof left over the glass's edge, to hold it
 window_bevel = 1.2;         // 45 deg flare on the outside, for the viewing angle
@@ -442,8 +447,20 @@ module plate() {
         rotate([180, 0, 0]) lid_elbow();
 }
 
+// Not printed: the screen, so a preview shows whether the window lines up
+// with the glass rather than only with the numbers that placed it.
+module screen_module() {
+    color("DarkGreen", 0.55)
+        translate([screen_at[0], screen_at[1], top_screen - screen_glass_t - screen_pcb_t])
+            cube([screen_pcb[0], screen_pcb[1], screen_pcb_t]);
+    color("Black", 0.8)
+        translate([glass_at[0], glass_at[1], top_screen - screen_glass_t])
+            cube([glass[0], glass[1], screen_glass_t]);
+}
+
 module assembly() {
     color("DimGray") base();
+    screen_module();
     color("SlateGray") lid_elbow();
     color("LightSlateGray") lid_hand();
     color("DarkGreen", 0.5) translate([0, 0, -green[2]]) cube([green[0], green[1], green[2]]);
