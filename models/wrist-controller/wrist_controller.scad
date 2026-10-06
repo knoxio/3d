@@ -62,15 +62,19 @@ screen_hole_d = 3.5;
 // half of the Ø3.5 hole. That makes the pitch 30.4 x 28.0.
 screen_hole_x = 0.8 + screen_hole_d / 2;
 screen_hole_y = [0.5 + screen_hole_d / 2, 1.5 + screen_hole_d / 2];
+// The panel, front to back across the PCB, exactly as measured:
+//   4.5 of bare board, a 3.8 lip (thin glass over the flex), then the 18.6
+//   glass itself, and the first lit row 6.1 in from the lip's outer edge.
+// The lip is a strip IN FRONT of the 18.6 glass, not part of it, and it faces
+// the front of the case. 4.5 + 3.8 is the 8.3 first measured to the glass.
+lip_edge = 4.5;             // PCB front edge to the lip's outer edge
+lip = 3.8;
 glass = [34.5, 18.6];
-// The lip faces the BACK of the case, not the front: the measured 4.5 gap
-// between the PCB's edge and the glass is at the back, so from the front it is
-// 33.5 - 4.5 - 18.6. Getting this backwards put the window 5.9 mm forward of
-// the screen, which only showed up on a print.
-glass_edge = 4.5;           // measured, at the back
-glass_inset = [0.5, screen_pcb[1] - glass_edge - glass[1]];
-glass_lip = 6.1;            // glass edge to the first lit pixel, measured
-glass_seat = 0.4;           // roof left over the glass's edge, to hold it
+glass_side = 0.5;           // PCB side edge to the glass
+first_row = 6.1;            // lip's outer edge to the first lit row
+lit = [29.42, 14.7];        // 128 x 64 active area of a 1.3" panel, centred across
+window_margin = 1.0;        // unlit glass left showing round the pixels
+glass_seat = 0.4;           // least roof left over the glass's edge
 window_bevel = 1.2;         // 45 deg flare on the outside, for the viewing angle
 label = "PURGE";
 label_size = 6;             // mm, cap height
@@ -140,18 +144,14 @@ top_hand = hand_top;
 inner_top = top_screen;
 floor_z = -(wire_space + green[2]);           // inner floor, below the board
 
-// The window is the glass itself, less the ledge that seats it. Sizing it to
-// the lit area instead needs the border around those pixels, and the measured
-// borders do not agree with a 2:1 display: a 6.1 mm strip at the front of an
-// 18.6 mm glass leaves 12.5 mm of height against the 15.4 that a 30.9-wide lit
-// area would want. The glass's own edge is a hard, measurable thing, so the
-// window follows that and shows a little unlit glass, which on a black case is
-// not worth measuring twice for. Both the window and the staking pins come off
-// the same four mounting holes, so neither depends on where the screen floats
-// above the board.
-glass_at = [screen_at[0] + glass_inset[0], screen_at[1] + glass_inset[1]];
-win_lo = [for (i = [0, 1]) glass_at[i] + glass_seat];
-win_hi = [for (i = [0, 1]) glass_at[i] + glass[i] - glass_seat];
+// Everything the window depends on, in the case's frame. The window is the
+// lit area plus a margin of unlit glass. Both it and the staking pins hang off
+// the screen's own mounting holes, so where the screen floats above the board
+// does not matter to either.
+glass_at = [screen_at[0] + glass_side, screen_at[1] + lip_edge + lip];
+lit_at = [glass_at[0] + (glass[0] - lit[0]) / 2, screen_at[1] + lip_edge + first_row];
+win_lo = [for (i = [0, 1]) lit_at[i] - window_margin];
+win_hi = [for (i = [0, 1]) lit_at[i] + lit[i] + window_margin];
 size_xy = [outer[1][0] - outer[0][0], outer[1][1] - outer[0][1]];
 
 // What the boards occupy, as [x0, y0, x1, y1] — the one thing a lid post may
@@ -189,16 +189,17 @@ echo(str("board posts: green ", green_hole_pitch[0], " x ", green_hole_pitch[1],
 echo(str("screen pins ", screen_pcb[0] - 2 * screen_hole_x, " x ",
          screen_pcb[1] - screen_hole_y[0] - screen_hole_y[1], " mm apart"));
 echo(str("window ", win_hi[0] - win_lo[0], " x ", win_hi[1] - win_lo[1],
-         " mm over a ", glass[0], " x ", glass[1], " glass, flaring to ",
+         " mm round a ", lit[0], " x ", lit[1], " lit area, flaring to ",
          win_hi[0] - win_lo[0] + 2 * window_bevel, " x ",
          win_hi[1] - win_lo[1] + 2 * window_bevel, " outside"));
 
-// The first lit pixel is glass_lip in from the glass's front edge, so a window
-// cut back only glass_seat from that edge cannot reach the pixels.
-assert(glass_seat < glass_lip, "the window crops the screen's front rows");
-echo(str("case ", size_xy[0], " x ", size_xy[1],
-         " x ", top_screen - floor_z + floor_t + lid_t, " mm at the screen, ",
-         top_hand - floor_z + floor_t + lid_t, " mm at the knob"));
+// The two ways a window can be wrong, both of which have been printed: short
+// of the pixels, or past the glass onto the lip or the bare board.
+assert([for (i = [0, 1]) if (win_lo[i] > lit_at[i] || win_hi[i] < lit_at[i] + lit[i]) i] == [],
+       "the window crops the lit area");
+assert([for (i = [0, 1]) if (win_lo[i] < glass_at[i] + glass_seat ||
+                             win_hi[i] > glass_at[i] + glass[i] - glass_seat) i] == [],
+       "the window runs off the glass");
 
 module rounded_block(lo, hi, z0, z1, r) {
     hull() for (x = [lo[0] + r, hi[0] - r], y = [lo[1] + r, hi[1] - r])
@@ -447,15 +448,22 @@ module plate() {
         rotate([180, 0, 0]) lid_elbow();
 }
 
-// Not printed: the screen, so a preview shows whether the window lines up
-// with the glass rather than only with the numbers that placed it.
+// Not printed: the screen as measured, drawn so a preview shows the pixels in
+// the window rather than only the numbers that put them there.
 module screen_module() {
-    color("DarkGreen", 0.55)
-        translate([screen_at[0], screen_at[1], top_screen - screen_glass_t - screen_pcb_t])
+    z_pcb = top_screen - screen_glass_t - screen_pcb_t;
+    color("DarkGreen")
+        translate([screen_at[0], screen_at[1], z_pcb])
             cube([screen_pcb[0], screen_pcb[1], screen_pcb_t]);
-    color("Black", 0.8)
-        translate([glass_at[0], glass_at[1], top_screen - screen_glass_t])
-            cube([glass[0], glass[1], screen_glass_t]);
+    color("Peru")
+        translate([glass_at[0], screen_at[1] + lip_edge, z_pcb + screen_pcb_t])
+            cube([glass[0], lip, screen_glass_t - 0.2]);
+    color([0.05, 0.05, 0.07])
+        translate([glass_at[0], glass_at[1], z_pcb + screen_pcb_t])
+            cube([glass[0], glass[1], screen_glass_t - 0.05]);
+    color("Cyan")
+        translate([lit_at[0], lit_at[1], z_pcb + screen_pcb_t])
+            cube([lit[0], lit[1], screen_glass_t]);
 }
 
 module assembly() {

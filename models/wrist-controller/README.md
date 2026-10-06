@@ -50,24 +50,38 @@ The screen is **not** fixed to the perfboard — it floats on wires, so it
 mounts to the elbow lid at its own Ø3.5 holes, and the window is cut relative
 to those, not to the green board.
 
-The window is **33.7 × 17.8** — the 34.5 × 18.6 glass, less the 0.4 mm ledge
-that seats it.
+The screen, front to back across its 33.5 mm PCB, as measured:
 
-**The lip faces the back of the case.** The measured 4.5 mm between the PCB's
-edge and the glass is at the back, so from the front the glass starts at
-33.5 − 4.5 − 18.6 = 10.4. Reading that gap as the front one put the window
-5.9 mm forward of the glass, which showed up as bare PCB inside the window on
-the PURGE side and lost pixels at the far side. The assembly preview now draws
-the screen, so the window can be checked against the glass rather than against
-the numbers that placed it.
+| From the PCB's front edge | What |
+| --- | --- |
+| 0 – 4.5 | bare board |
+| 4.5 – 8.3 | the lip: thin glass over the flex, 3.8 wide |
+| 8.3 – 26.9 | the glass, 18.6 |
+| 10.6 – 25.3 | lit rows — the first is 6.1 in from the lip's outer edge |
+| 26.9 – 33.5 | bare board, with the back pair of holes |
 
-It is cut to the glass rather than to the lit pixels because the measured
-borders do not describe a 2:1 display: the first lit row is 6.1 mm in from the
-glass's front edge, which leaves at most 12.5 mm of lit height on an 18.6 mm
-glass, against the 15.4 mm that a 30.9 mm-wide lit area would need. One of
-those figures is wrong and it is not worth chasing — the glass's own edge is a
-hard thing to measure, so the window follows that and shows a little unlit
-glass, which is invisible on a black case.
+The lip is a strip in front of the 18.6 mm glass, not part of it, and it faces
+the front of the case. Across, the 29.42 mm lit area is centred in the 34.5 mm
+glass. Lit size is the 1.3" 128 × 64 panel's active area, 29.42 × 14.7.
+
+The window is that lit area plus 1 mm of unlit glass all round: **31.4 × 16.7**.
+It stays on the glass, 1.3 mm short of the lip and 0.6 mm short of the back
+edge, so neither the flex nor the board can show.
+
+Three earlier prints each got this wrong a different way, and this one geometry
+accounts for all three to within a few tenths:
+
+| Print | Window, front to back | Geometry predicts | Seen |
+| --- | --- | --- | --- |
+| 1 | 15.2 – 30.0 | front rows cropped 0.6, 0.7 dark at the back; 2.4 empty at one side | "bottom ones gone, 1.1 on top, 2.5 empty to the side" |
+| 2 | 8.4 – 26.2 | 3.4 of lip showing in front, back rows cropped 2.6 | flex inside the window, top rows missing |
+| 3 | 14.3 – 32.1 | pixels at the front edge, 1.7 of bare board at the back | exactly that, with both back holes in view |
+
+The mistakes behind them: treating the lip as part of the 18.6 mm glass, then
+cutting the window to "the glass" starting at the lip's edge, then deciding the
+lip faced the back. Two asserts now state what a window must do — contain the
+lit area, stay on the glass — and the assembly preview draws the PCB, lip,
+glass and lit area, so a render shows the pixels in the opening.
 
 **PURGE** is sunk 0.4 mm into the face below the window — two layers, not
 raised, because that face prints against the bed. The letters therefore start
@@ -75,7 +89,7 @@ a couple of layers up: swap filament at layer 3 and they come out in their own
 colour, with the rest of the lid in the second colour and only its top face in
 the first.
 
-Outside, it flares at 45° to **34.1 × 17.2**. The roof is 2 mm of plastic
+Outside, it flares at 45° to **33.8 × 19.1**. The roof is 2 mm of plastic
 standing in front of the glass, which costs the display its viewing angle at
 the edges; the bevel takes 1.2 of those 2 mm back and leaves 0.8 mm of straight
 wall at the seat. Printed roof-down the flare is a 45° face, so it still needs
@@ -164,9 +178,8 @@ charger, no power switch inside.
 - The USB-C socket's *width* is assumed at 9 mm; its position comes from the
   measured 7.5 mm gap to the board's back edge. The opening is 13 mm wide, so
   the assumption has ~2 mm of slack each side.
-- The lit area's size is **not known**, and the window no longer depends on it
-  — see above. If the display turns out to sit off-centre within its glass, it
-  will show as an uneven unlit border rather than as lost pixels.
+- The lit area's size, 29.42 × 14.7, is the panel's datasheet figure rather
+  than a measurement. Its position is measured. The 1 mm margin covers both.
 - The screen's rough position (±1 mm) no longer affects the window: the window
   and the staking pins are both derived from the same four mounting holes.
 - The on-screen C/B/A labels will not line up with the buttons: the screen
