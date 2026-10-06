@@ -10,7 +10,7 @@
 
 // parts: socket-test cap sleeve plate
 
-part = "assembly"; // [assembly, socket-test, cap, sleeve, plate, clash, sleeve-clash]
+part = "assembly"; // [assembly, socket-test, cap, sleeve, plate, knob, clash, sleeve-clash]
 
 /* [The knob, as the original mesh has it] */
 knob_r = 25;            // mm, widest radius
@@ -57,6 +57,12 @@ channel_w = 6;          // mm, slot for the bat's own lead to reach the bay
 top_stop_r = 7;         // mm, opening left at the top of the sleeve
 post_d = 9;             // mm, the cap's post that holds the pack up off its leads
 post_gap = 1.0;         // mm between the post and the pack
+
+/* [The whole knob] */
+// The original knob's mesh as an STL standing on z = 0. It is someone else's
+// model and not in the repo, so bat.py extracts it and passes the path in;
+// that is also why `knob` is not in the parts list above.
+knob_mesh = "";
 
 /* [Checks] */
 test_h = 25;            // mm of knob end in the test piece
@@ -203,6 +209,17 @@ module placed_cap() {
     translate([0, 0, -gap]) rotate([0, 0, turn]) cap();
 }
 
+// The new end on the original knob: everything below knob_h is redrawn, and
+// from there up the mesh is already a plain tube the socket runs straight into.
+module knob() {
+    assert(knob_mesh != "", "knob needs -D knob_mesh=<stl>; run bat.py instead");
+    socket(knob_h + 1);
+    difference() {
+        import(knob_mesh, convexity = 6);
+        translate([0, 0, -1]) cylinder(r = knob_r + 5, h = knob_h + 1);
+    }
+}
+
 module socket_test() {
     translate([0, 0, -mate]) socket(mate + test_h);
 }
@@ -215,6 +232,7 @@ else if (part == "plate") {
     translate([4 * knob_r + 2 * plate_gap + sleeve_r, knob_r, -sleeve_z0]) sleeve();
 }
 else if (part == "sleeve") translate([0, 0, -sleeve_z0]) sleeve();
+else if (part == "knob") translate([0, 0, -mate]) knob();
 else if (part == "clash") intersection() { socket(mate + test_h); placed_cap(); }
 else if (part == "sleeve-clash") intersection() {
     translate([0, 0, lift]) sleeve();
