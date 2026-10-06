@@ -59,14 +59,15 @@ is a three-start part-turn thread — three lugs through three notches, then
 about 55° clockwise until the cap pulls up tight on its flange. Both bearing
 faces are 45° cones on one helix, so they bear over their whole area, centre
 the cap, and print without support. Print tolerance only moves the angle at
-which it tightens: roughly 20° either way covers +0.8 / −0.4 mm.
+which it tightens: up to 22° later if the parts print 0.8 mm loose, 12° earlier
+if they print 0.4 mm tight.
 
 Checked by intersecting the two parts at sixteen positions: free on the way in
 and while turning, touching on both faces when seated, solid contact if pulled
 out or turned past tight.
 
-Print `knob_end-socket-test` and `knob_end-cap` first (25 mm tall, under an
-hour for the pair) to settle the fit before committing to the 180 mm knob.
+Print `knob_end-socket-test` and `knob_end-cap` first — the socket piece is
+25 mm tall — to settle the fit before committing to the 180 mm knob.
 
 Still to do: the sleeve that guides the pack, which needs the pack's length and
 its lead and connector; and merging the new knob end onto the knob's mesh.
