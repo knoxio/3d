@@ -19,6 +19,7 @@ arm, Z up. Measurements off the bench go straight into the parameter block.
 | Buttons | X 60.5, Y 8.4 / 16.2 / 24.0, Ø6 | derived; gaps disagree by ~1.4, holes are Ø7.0 |
 | Encoder shaft | X 78.2, Y 13.2 | four readings closing within 0.35 |
 | Screen PCB | corner at 0.1, 3.5 | rough; overhangs the back edge by 7 |
+| Screen holes | 2.55 in from both sides, 2.25 front, 3.25 back → 30.4 × 28.0 pitch | measured edge gaps + half the Ø3.5 hole |
 | USB-C | centre Y 18.0 | 7.5 gap to the board's back edge, Ø9 socket assumed |
 
 ## Flat base, raised screen lid
@@ -49,7 +50,7 @@ The screen is **not** fixed to the perfboard — it floats on wires, so it
 mounts to the elbow lid at its own Ø3.5 holes, and the window is cut relative
 to those, not to the green board.
 
-The window is **31.7 × 14.8** at the glass — the lit area opened 0.4 mm past
+The window is **33.3 × 15.6** at the glass — the lit area opened 0.4 mm past
 its edge, then held back 0.4 mm from the glass's own edge so the roof still has
 something to seat the glass against. It is smaller than the 34.5 × 18.6 glass
 because 1.8 mm down each long edge and the 3.8 mm lip are dead bezel.
@@ -130,10 +131,15 @@ charger, no power switch inside.
   measured 7.5 mm gap to the board's back edge. The opening is 13 mm wide, so
   the assumption has ~2 mm of slack each side.
 - The lit area is **derived, not measured**: 30.9 × 14.8, from the glass minus
-  the measured 3.8 mm lip and a 1.8 mm side bezel. If the real display sits
-  differently inside its glass, `glass_bezel` is the number to correct — and
-  erring wide only shows a little black glass, where erring narrow hides
+  the measured 3.8 mm lip and a 1.8 mm side bezel. The window therefore opens
+  1.2 mm past it, since overshooting shows unlit glass and undershooting eats
   pixels.
+- **Across the arm there is only 0.4 mm of that slack**, because the lit area
+  runs to the glass's back edge and the roof still has to seat it. That makes
+  `glass_inset[1]` — the 8.3 mm from the PCB's front edge to the glass — the
+  tightest number in the model, and the owner's own three figures for it
+  (8.3 + 18.6 + 5.7) sum 0.9 mm short of the 33.5 PCB, so it is good to about
+  ±1 mm. Measure it before trusting the alignment.
 - The screen's rough position (±1 mm) no longer affects the window: the window
   and the staking pins are both derived from the same four mounting holes.
 - The on-screen C/B/A labels will not line up with the buttons: the screen
