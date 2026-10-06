@@ -15,7 +15,7 @@ arm, Z up. Measurements off the bench go straight into the parameter block.
 | --- | --- | --- |
 | Green board | 70 × 30 × 1.5 at origin | measured |
 | KY-040 board | 18.5 × 25.6, butted with 0.5 gap | measured |
-| Board holes | Ø2.5 at 2.45 in from both green edges; Ø3.5 at X 85.75, Y 6.95/23.05 | derived from edge gaps |
+| Board holes | Ø2.5 at 2.45 in from both green edges; Ø3.5 at X 86.25, Y 6.95/23.05 | derived from edge gaps |
 | Buttons | X 60.5, Y 8.4 / 16.2 / 24.0, Ø6 | derived; gaps disagree by ~1.4, holes are Ø7.0 |
 | Encoder shaft | X 78.2, Y 13.2 | four readings closing within 0.35 |
 | Screen PCB | corner at 0.1, 3.5 | rough; overhangs the back edge by 7 |
@@ -77,6 +77,25 @@ The knob opening clears the **bush**, not the knob: Ø8.0 around the Ø6.85
 thread. The knob itself stays off until the lid is on, and its Ø14.5 skirt then
 hides the hole — asserted, along with the 0.5 mm between the lid's top face and
 the knob's underside at 11 mm.
+
+## Board posts
+
+Every post in the case is the same Ø6 boss with a Ø3.2 insert pilot — the
+board's hole diameter is not used anywhere, and does not need to be. What it
+does decide is how accurate the post has to be:
+
+| Board | Hole | Play on an M2 screw | Pitch may be out by |
+| --- | --- | --- | --- |
+| Green perfboard | Ø2.5 | 0.25 mm a side | 0.5 mm |
+| KY-040 | Ø3.5 | 0.75 mm a side | 1.5 mm |
+
+So the green board's 65.1 × 25.1 pitch has to be right to half a millimetre,
+and it rests on a reported "~1.2 mm from the edge". Measure it before fitting
+four screws.
+
+Hole centres are now derived from the gap to the board's edge rather than
+written out as numbers. A literal is how the KY-040's centre came to be 0.5 mm
+out — it had been worked out without the 0.5 mm gap between the two boards.
 
 ## Lid fixings
 

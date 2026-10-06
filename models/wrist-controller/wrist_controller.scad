@@ -14,11 +14,19 @@ part = "assembly"; // [assembly, base, lid-elbow, lid-hand, plate]
 green = [70, 30, 1.5];      // perfboard, X by Y by thickness
 black = [18.5, 25.6];       // KY-040 board, butted against the green one
 black_gap = 0.5;            // measured 88.7-89 assembled against 88.5 butted
+// Hole centres are derived from the gap to the board's edge, so they follow
+// the boards if a dimension is corrected. A literal here is how the KY-040's
+// centre came to be 0.5 out: it was worked out without the gap between the
+// boards.
 green_hole_d = 2.5;
-green_hole_inset = 2.45;    // centres, from both edges
+green_hole_edge = 1.2;      // bare board between the edge and the hole
+green_hole_inset = green_hole_edge + green_hole_d / 2;
 black_hole_d = 3.5;
-black_hole_x = 85.75;       // centres, in the shared frame
-black_hole_y = [6.95, 23.05];
+black_hole_edge = [1.0, 3.0];   // to the hand edge, and to both wrist edges
+black_at = [green[0] + black_gap, (green[1] - black[1]) / 2];
+black_hole_x = black_at[0] + black[0] - black_hole_edge[0] - black_hole_d / 2;
+black_hole_y = [black_at[1] + black_hole_edge[1] + black_hole_d / 2,
+                black_at[1] + black[1] - black_hole_edge[1] - black_hole_d / 2];
 
 /* [Stack heights, from the board's top face] */
 wire_space = 5.5;           // under the board, for the loom (dressed flat)
@@ -174,6 +182,8 @@ assert([for (f = fixings("elbow"))
 assert(knob_bottom >= top_hand + lid_t, "the knob fouls the hand lid");
 assert(knob_d > bush_d + knob_clear + 2, "the knob no longer hides its hole");
 
+echo(str("board posts: green ", green[0] - 2 * green_hole_inset, " x ",
+         green[1] - 2 * green_hole_inset, " apart, KY-040 at x ", black_hole_x));
 echo(str("screen pins ", screen_pcb[0] - 2 * screen_hole_x, " x ",
          screen_pcb[1] - screen_hole_y[0] - screen_hole_y[1], " mm apart"));
 echo(str("window ", win_hi[0] - win_lo[0], " x ", win_hi[1] - win_lo[1],
@@ -436,7 +446,7 @@ module assembly() {
     color("SlateGray") lid_elbow();
     color("LightSlateGray") lid_hand();
     color("DarkGreen", 0.5) translate([0, 0, -green[2]]) cube([green[0], green[1], green[2]]);
-    color("Black", 0.5) translate([green[0] + black_gap, (green[1] - black[1]) / 2, -green[2]])
+    color("Black", 0.5) translate([black_at[0], black_at[1], -green[2]])
         cube([black[0], black[1], green[2]]);
 }
 
