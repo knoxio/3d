@@ -203,6 +203,14 @@ mise run build wrist-controller
 
 ## Status
 
-draft — nothing printed. Case is 101.5 × 44.1, 19.5 mm tall with the screen
-cap rising to 24.5 mm, flat underside. Shell, lids, bosses, openings and strap
-lugs; no lip seal or edge rounding yet.
+printed-ok, **parked 2026-10-06 until the M2 heat-set inserts arrive.** All
+three parts printed and the boards and screen fit; the window lines up with the
+lit area.
+
+Not yet tried, because it needs the inserts: pressing them into the posts,
+screwing the boards and both lids down, and the strap under load. The seam's
+front corner uses a self-tapped Ø4 boss rather than an insert, so that one can
+be tried now.
+
+Case is 101.5 × 44.1, 19.5 mm tall with the screen cap rising to 24.5 mm, flat
+underside. No lip seal or edge rounding yet.
