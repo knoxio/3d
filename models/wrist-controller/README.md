@@ -15,7 +15,7 @@ arm, Z up. Measurements off the bench go straight into the parameter block.
 | --- | --- | --- |
 | Green board | 70 × 30 × 1.5 at origin | measured |
 | KY-040 board | 18.5 × 25.6, butted with 0.5 gap | measured |
-| Board holes | Ø2.5 at 2.45 in from both green edges; Ø3.5 at X 86.25, Y 6.95/23.05 | derived from edge gaps |
+| Board holes | green Ø2.5 at a 65.5 × 25.9 pitch; Ø3.5 at X 86.25, Y 6.95/23.05 | green pitch measured; KY-040 from edge gaps |
 | Buttons | X 60.5, Y 8.4 / 16.2 / 24.0, Ø6 | derived; gaps disagree by ~1.4, holes are Ø7.0 |
 | Encoder shaft | X 78.2, Y 13.2 | four readings closing within 0.35 |
 | Screen PCB | corner at 0.1, 3.5 | rough; overhangs the back edge by 7 |
@@ -50,10 +50,16 @@ The screen is **not** fixed to the perfboard — it floats on wires, so it
 mounts to the elbow lid at its own Ø3.5 holes, and the window is cut relative
 to those, not to the green board.
 
-The window is **33.3 × 15.6** at the glass — the lit area opened 0.4 mm past
-its edge, then held back 0.4 mm from the glass's own edge so the roof still has
-something to seat the glass against. It is smaller than the 34.5 × 18.6 glass
-because 1.8 mm down each long edge and the 3.8 mm lip are dead bezel.
+The window is **33.7 × 17.8** — the 34.5 × 18.6 glass, less the 0.4 mm ledge
+that seats it.
+
+It is cut to the glass rather than to the lit pixels because the measured
+borders do not describe a 2:1 display: the first lit row is 6.1 mm in from the
+glass's front edge, which leaves at most 12.5 mm of lit height on an 18.6 mm
+glass, against the 15.4 mm that a 30.9 mm-wide lit area would need. One of
+those figures is wrong and it is not worth chasing — the glass's own edge is a
+hard thing to measure, so the window follows that and shows a little unlit
+glass, which is invisible on a black case.
 
 **PURGE** is sunk 0.4 mm into the face below the window — two layers, not
 raised, because that face prints against the bed. The letters therefore start
@@ -89,9 +95,10 @@ does decide is how accurate the post has to be:
 | Green perfboard | Ø2.5 | 0.25 mm a side | 0.5 mm |
 | KY-040 | Ø3.5 | 0.75 mm a side | 1.5 mm |
 
-So the green board's 65.1 × 25.1 pitch has to be right to half a millimetre,
-and it rests on a reported "~1.2 mm from the edge". Measure it before fitting
-four screws.
+So the green board's pitch has to be right to half a millimetre. It was taken
+from a reported "~1.2 mm from the edge", giving 65.1 × 25.1; measured, it is
+**65.5 × 25.9**. Across the arm that is 0.8 mm out — more than the Ø2.5 holes
+can absorb, which is why all four screws pulled.
 
 Hole centres are now derived from the gap to the board's edge rather than
 written out as numbers. A literal is how the KY-040's centre came to be 0.5 mm
@@ -149,16 +156,9 @@ charger, no power switch inside.
 - The USB-C socket's *width* is assumed at 9 mm; its position comes from the
   measured 7.5 mm gap to the board's back edge. The opening is 13 mm wide, so
   the assumption has ~2 mm of slack each side.
-- The lit area is **derived, not measured**: 30.9 × 14.8, from the glass minus
-  the measured 3.8 mm lip and a 1.8 mm side bezel. The window therefore opens
-  1.2 mm past it, since overshooting shows unlit glass and undershooting eats
-  pixels.
-- **Across the arm there is only 0.4 mm of that slack**, because the lit area
-  runs to the glass's back edge and the roof still has to seat it. That makes
-  `glass_inset[1]` — the 8.3 mm from the PCB's front edge to the glass — the
-  tightest number in the model, and the owner's own three figures for it
-  (8.3 + 18.6 + 5.7) sum 0.9 mm short of the 33.5 PCB, so it is good to about
-  ±1 mm. Measure it before trusting the alignment.
+- The lit area's size is **not known**, and the window no longer depends on it
+  — see above. If the display turns out to sit off-centre within its glass, it
+  will show as an uneven unlit border rather than as lost pixels.
 - The screen's rough position (±1 mm) no longer affects the window: the window
   and the staking pins are both derived from the same four mounting holes.
 - The on-screen C/B/A labels will not line up with the buttons: the screen

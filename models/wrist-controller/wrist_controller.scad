@@ -19,8 +19,9 @@ black_gap = 0.5;            // measured 88.7-89 assembled against 88.5 butted
 // centre came to be 0.5 out: it was worked out without the gap between the
 // boards.
 green_hole_d = 2.5;
-green_hole_edge = 1.2;      // bare board between the edge and the hole
-green_hole_inset = green_hole_edge + green_hole_d / 2;
+green_hole_pitch = [65.5, 25.9];   // measured centre to centre, pattern centred
+green_hole_inset = [(green[0] - green_hole_pitch[0]) / 2,
+                    (green[1] - green_hole_pitch[1]) / 2];
 black_hole_d = 3.5;
 black_hole_edge = [1.0, 3.0];   // to the hand edge, and to both wrist edges
 black_at = [green[0] + black_gap, (green[1] - black[1]) / 2];
@@ -62,13 +63,8 @@ screen_hole_d = 3.5;
 screen_hole_x = 0.8 + screen_hole_d / 2;
 screen_hole_y = [0.5 + screen_hole_d / 2, 1.5 + screen_hole_d / 2];
 glass = [34.5, 18.6];
-glass_inset = [0.5, 8.3];   // glass corner from the PCB corner
-glass_lip = 3.8;            // unlit strip along the glass's front edge
-glass_bezel = 1.8;          // unlit border along the long edges
-// The glass's position on its PCB is only known to about a millimetre, so the
-// window opens well past the lit area: overshooting shows a sliver of unlit
-// glass, which is nearly invisible, where undershooting eats pixels.
-window_margin = 1.2;        // how far the window opens past the lit area
+glass_inset = [0.5, 4.5];   // glass corner from the PCB corner, measured
+glass_lip = 6.1;            // glass edge to the first lit pixel, measured
 glass_seat = 0.4;           // roof left over the glass's edge, to hold it
 window_bevel = 1.2;         // 45 deg flare on the outside, for the viewing angle
 label = "PURGE";
@@ -139,17 +135,18 @@ top_hand = hand_top;
 inner_top = top_screen;
 floor_z = -(wire_space + green[2]);           // inner floor, below the board
 
-// The window shows the lit area, opened a little past it and then held back
-// from the glass's own edge so the roof still has something to seat the glass
-// against. Both the window and the staking pins come off the same four
-// mounting holes, so neither depends on where the screen floats above the
-// board.
+// The window is the glass itself, less the ledge that seats it. Sizing it to
+// the lit area instead needs the border around those pixels, and the measured
+// borders do not agree with a 2:1 display: a 6.1 mm strip at the front of an
+// 18.6 mm glass leaves 12.5 mm of height against the 15.4 that a 30.9-wide lit
+// area would want. The glass's own edge is a hard, measurable thing, so the
+// window follows that and shows a little unlit glass, which on a black case is
+// not worth measuring twice for. Both the window and the staking pins come off
+// the same four mounting holes, so neither depends on where the screen floats
+// above the board.
 glass_at = [screen_at[0] + glass_inset[0], screen_at[1] + glass_inset[1]];
-lit_at = [glass_at[0] + glass_bezel, glass_at[1] + glass_lip];
-lit = [glass[0] - 2 * glass_bezel, glass[1] - glass_lip];
-win_lo = [for (i = [0, 1]) max(lit_at[i] - window_margin, glass_at[i] + glass_seat)];
-win_hi = [for (i = [0, 1]) min(lit_at[i] + lit[i] + window_margin,
-                               glass_at[i] + glass[i] - glass_seat)];
+win_lo = [for (i = [0, 1]) glass_at[i] + glass_seat];
+win_hi = [for (i = [0, 1]) glass_at[i] + glass[i] - glass_seat];
 size_xy = [outer[1][0] - outer[0][0], outer[1][1] - outer[0][1]];
 
 // What the boards occupy, as [x0, y0, x1, y1] — the one thing a lid post may
@@ -182,14 +179,18 @@ assert([for (f = fixings("elbow"))
 assert(knob_bottom >= top_hand + lid_t, "the knob fouls the hand lid");
 assert(knob_d > bush_d + knob_clear + 2, "the knob no longer hides its hole");
 
-echo(str("board posts: green ", green[0] - 2 * green_hole_inset, " x ",
-         green[1] - 2 * green_hole_inset, " apart, KY-040 at x ", black_hole_x));
+echo(str("board posts: green ", green_hole_pitch[0], " x ", green_hole_pitch[1],
+         " apart, KY-040 at x ", black_hole_x));
 echo(str("screen pins ", screen_pcb[0] - 2 * screen_hole_x, " x ",
          screen_pcb[1] - screen_hole_y[0] - screen_hole_y[1], " mm apart"));
 echo(str("window ", win_hi[0] - win_lo[0], " x ", win_hi[1] - win_lo[1],
-         " mm over a lit area of ", lit[0], " x ", lit[1],
-         ", flaring to ", win_hi[0] - win_lo[0] + 2 * window_bevel, " x ",
+         " mm over a ", glass[0], " x ", glass[1], " glass, flaring to ",
+         win_hi[0] - win_lo[0] + 2 * window_bevel, " x ",
          win_hi[1] - win_lo[1] + 2 * window_bevel, " outside"));
+
+// The first lit pixel is glass_lip in from the glass's front edge, so a window
+// cut back only glass_seat from that edge cannot reach the pixels.
+assert(glass_seat < glass_lip, "the window crops the screen's front rows");
 echo(str("case ", size_xy[0], " x ", size_xy[1],
          " x ", top_screen - floor_z + floor_t + lid_t, " mm at the screen, ",
          top_hand - floor_z + floor_t + lid_t, " mm at the knob"));
@@ -244,8 +245,8 @@ module boss(x, y, h, tapped = false) {
 }
 
 module board_bosses() {
-    for (x = [green_hole_inset, green[0] - green_hole_inset],
-         y = [green_hole_inset, green[1] - green_hole_inset])
+    for (x = [green_hole_inset[0], green[0] - green_hole_inset[0]],
+         y = [green_hole_inset[1], green[1] - green_hole_inset[1]])
         boss(x, y, wire_space);
     for (y = black_hole_y) boss(black_hole_x, y, wire_space);
 }
