@@ -66,26 +66,54 @@ Checked by intersecting the two parts at sixteen positions: free on the way in
 and while turning, touching on both faces when seated, solid contact if pulled
 out or turned past tight.
 
-Print `knob_end-plate.3mf` first — the socket test piece and the cap on one
-plate, the taller of them 25 mm — to settle the fit before committing to the
-180 mm knob.
+### The pack and its sleeve
 
-The pack, as measured by the owner: 131.4 mm long without its leads, up to
-Ø20.5; a 70 mm charging lead with a 2S balance connector and a 65 mm power lead
-with a JST, which may be cut and replaced. Whether the leads leave the end
-straight or from the side is not yet known.
+The pack, as measured by the owner: 2 × 18650 inline, shrink-wrapped, 131.4 mm
+long and up to Ø20.5. Both leads leave one end straight out, at its edge: a
+65 mm power lead with a 2-pin JST (which may be cut and replaced) and a 70 mm
+charging lead with a 2S balance plug.
 
-Still to do: the sleeve that guides the pack, and merging the new knob end onto
-the knob's mesh.
+`sleeve` is a Ø24.5 tube for the pack with a Ø34.4 bay under it and a guide
+ring above, sliding in the handle's Ø35 bore. It is not a carrier to be pulled
+out: with the cap off, the pack slides out of it on its own.
+
+- **Swung**, the pack is thrown toward the tip. The sleeve's closed top takes
+  that, and its guide ring lands on the 45° shoulder inside the first joint.
+  The cap carries none of it.
+- **At rest**, a post up the middle of the cap holds the pack off its own
+  leads. The leads leave the edge of the pack's end, so a central post misses
+  them at whatever angle the cap stops.
+- **The bay** under the pack, 45 mm plus the cap's hollow, takes both leads
+  folded and the mated connectors. The bat's own lead comes down a slot beside
+  the sleeve into it, and should be long enough to hang about 3 cm out of the
+  knob so the plugs can be joined outside.
+- The pack sits 64 to 196 mm from the bottom of the bat, so the sleeve's nose
+  passes through the first joint into the handle piece.
+
+Checked against the real bore read from the downloaded meshes: 0.28 mm of
+clearance all the way up when resting on the cap, zero at the shoulder when
+lifted the 0.5 mm of float, and blocked beyond that; clear of the socket and
+the cap. It is 187 mm tall and about 38 g, and prints standing with no support.
+
+### Printing
+
+`knob_end-plate.3mf` has the socket test piece, the cap and the sleeve. The
+socket and cap prove the lock. Cap, sleeve and pack stacked on the bench prove
+the pack's fit and the post's length. The sleeve's fit in the handle cannot be
+tried until the knob itself is printed.
+
+Still to do: merging the new knob end onto the knob's mesh, and the full
+project with every part.
 
 ## Assumptions
 
 The knob's outline — Ø40 handle, Ø50 knob, 5 mm chamfers, 25 mm tall, Ø35 bore —
-is read off the mesh, not measured on a print. The pack's Ø20.5 is the owner's
-figure.
+and the shoulder inside the first joint are read off the mesh, not measured on
+a print. The pack's size is the owner's. The connectors' sizes are not
+measured; the bay is sized generously rather than to them.
 
 ## Status
 
-draft — rescaled to 100 % and sliced, not printed. The battery door's lock is
-designed and awaiting a test print; the pack sleeve and the merged knob are not
+draft — rescaled to 100 % and sliced, not printed. The battery door's lock, cap
+and pack sleeve are designed and awaiting a test print; the merged knob is not
 done.
