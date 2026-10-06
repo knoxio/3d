@@ -46,11 +46,39 @@ uv run --script models/baseball-bat/bat.py out/baseball-bat
 layers, 2 walls, 10 % infill, 5 mm outer brim, no supports. Sliced by Bambu
 Studio's CLI at 100 %: nothing outside the plate, 8 h 53 min, 320 g.
 
+## Battery door
+
+Two 18650s inline, as a wrapped pack up to Ø20.5 with its leads at one end, go
+in through the knob. The cap carries no bending load there, and all four body
+joints stay glued.
+
+The original knob is a hollow cone behind a Ø26.4 hole, with nothing square to
+latch on, so `knob_end.scad` replaces its bottom 25 mm: same silhouette
+outside, a Ø35 socket inside, and a cap that forms the lower chamfer. The lock
+is a three-start part-turn thread — three lugs through three notches, then
+about 55° clockwise until the cap pulls up tight on its flange. Both bearing
+faces are 45° cones on one helix, so they bear over their whole area, centre
+the cap, and print without support. Print tolerance only moves the angle at
+which it tightens: roughly 20° either way covers +0.8 / −0.4 mm.
+
+Checked by intersecting the two parts at sixteen positions: free on the way in
+and while turning, touching on both faces when seated, solid contact if pulled
+out or turned past tight.
+
+Print `knob_end-socket-test` and `knob_end-cap` first (25 mm tall, under an
+hour for the pair) to settle the fit before committing to the 180 mm knob.
+
+Still to do: the sleeve that guides the pack, which needs the pack's length and
+its lead and connector; and merging the new knob end onto the knob's mesh.
+
 ## Assumptions
 
-None about fit yet — nothing has been changed but scale and placement.
+The knob's outline — Ø40 handle, Ø50 knob, 5 mm chamfers, 25 mm tall, Ø35 bore —
+is read off the mesh, not measured on a print. The pack's Ø20.5 is the owner's
+figure.
 
 ## Status
 
-draft — rescaled to 100 % and sliced, not printed. An opening for swapping
-batteries is still to be designed.
+draft — rescaled to 100 % and sliced, not printed. The battery door's lock is
+designed and awaiting a test print; the pack sleeve and the merged knob are not
+done.
