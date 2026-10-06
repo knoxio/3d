@@ -8,9 +8,9 @@
 // Z is the bat's own axis, 0 at its very bottom. The socket and the cap meet
 // on the plane z = chamfer.
 
-// parts: socket-test cap
+// parts: socket-test cap plate
 
-part = "assembly"; // [assembly, socket-test, cap, clash]
+part = "assembly"; // [assembly, socket-test, cap, plate, clash]
 
 /* [The knob, as the original mesh has it] */
 knob_r = 25;            // mm, widest radius
@@ -40,6 +40,7 @@ coin_slot = [24, 3, 1.5];   // mm, length, width, depth
 test_h = 25;            // mm of knob end in the test piece
 turn = 55;              // deg, cap position in the assembly and clash views
 gap = 0;                // mm the cap is pulled back out, same views
+plate_gap = 14;         // mm between pieces on the bed
 
 $fa = 2;
 $fs = 0.4;
@@ -109,8 +110,16 @@ module placed_cap() {
     translate([0, 0, -gap]) rotate([0, 0, turn]) cap();
 }
 
-if (part == "socket-test") translate([0, 0, -mate]) socket(mate + test_h);
+module socket_test() {
+    translate([0, 0, -mate]) socket(mate + test_h);
+}
+
+if (part == "socket-test") socket_test();
 else if (part == "cap") cap();
+else if (part == "plate") {
+    translate([knob_r, knob_r, 0]) socket_test();
+    translate([3 * knob_r + plate_gap, knob_r, 0]) cap();
+}
 else if (part == "clash") intersection() { socket(mate + test_h); placed_cap(); }
 else {
     color("SaddleBrown") difference() {

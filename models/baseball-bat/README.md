@@ -66,11 +66,17 @@ Checked by intersecting the two parts at sixteen positions: free on the way in
 and while turning, touching on both faces when seated, solid contact if pulled
 out or turned past tight.
 
-Print `knob_end-socket-test` and `knob_end-cap` first — the socket piece is
-25 mm tall — to settle the fit before committing to the 180 mm knob.
+Print `knob_end-plate.3mf` first — the socket test piece and the cap on one
+plate, the taller of them 25 mm — to settle the fit before committing to the
+180 mm knob.
 
-Still to do: the sleeve that guides the pack, which needs the pack's length and
-its lead and connector; and merging the new knob end onto the knob's mesh.
+The pack, as measured by the owner: 131.4 mm long without its leads, up to
+Ø20.5; a 70 mm charging lead with a 2S balance connector and a 65 mm power lead
+with a JST, which may be cut and replaced. Whether the leads leave the end
+straight or from the side is not yet known.
+
+Still to do: the sleeve that guides the pack, and merging the new knob end onto
+the knob's mesh.
 
 ## Assumptions
 
