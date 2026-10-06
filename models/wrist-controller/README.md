@@ -53,6 +53,14 @@ to those, not to the green board.
 The window is **33.7 × 17.8** — the 34.5 × 18.6 glass, less the 0.4 mm ledge
 that seats it.
 
+**The lip faces the back of the case.** The measured 4.5 mm between the PCB's
+edge and the glass is at the back, so from the front the glass starts at
+33.5 − 4.5 − 18.6 = 10.4. Reading that gap as the front one put the window
+5.9 mm forward of the glass, which showed up as bare PCB inside the window on
+the PURGE side and lost pixels at the far side. The assembly preview now draws
+the screen, so the window can be checked against the glass rather than against
+the numbers that placed it.
+
 It is cut to the glass rather than to the lit pixels because the measured
 borders do not describe a 2:1 display: the first lit row is 6.1 mm in from the
 glass's front edge, which leaves at most 12.5 mm of lit height on an 18.6 mm
