@@ -29,6 +29,7 @@ joint, handle to tip, is Ø30.6, Ø31.4, Ø59.7 and Ø69.1.
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `--scale` | 1.0 | 1.0 is the designer's size; the download was saved at 0.72 |
+| `--no-door` | off | leave the knob as downloaded; required at any other scale |
 | `--src` | `V2A1MiniCompatible.3mf` here | the downloaded project |
 
 The plate is laid out by the script; it stops if a part would be taller than
@@ -42,9 +43,14 @@ uv run --script models/baseball-bat/bat.py out/baseball-bat
 
 ## Print
 
-`out/baseball-bat/bat-p1s.3mf`, with the project's own settings: PLA, 0.28 mm
-layers, 2 walls, 10 % infill, 5 mm outer brim, no supports. Sliced by Bambu
-Studio's CLI at 100 %: nothing outside the plate, 8 h 53 min, 320 g.
+`out/baseball-bat/bat-p1s.3mf` is the whole bat on one plate: the four
+unchanged pieces, the knob with its new end, the battery cap and the sleeve.
+The project's own settings: PLA, 0.28 mm layers, 2 walls, 10 % infill, 5 mm
+outer brim, no supports. Sliced by Bambu Studio's CLI: all seven parts
+manifold, nothing outside the plate, 9 h 47 min, 363 g.
+
+The plate picture stored inside the file is the download's and shows the old
+layout until Bambu Studio saves it again.
 
 ## Battery door
 
@@ -102,8 +108,16 @@ socket and cap prove the lock. Cap, sleeve and pack stacked on the bench prove
 the pack's fit and the post's length. The sleeve's fit in the handle cannot be
 tried until the knob itself is printed.
 
-Still to do: merging the new knob end onto the knob's mesh, and the full
-project with every part.
+### The merged knob
+
+`bat.py` extracts the knob's mesh, has OpenSCAD cut it at 25 mm and join the new
+end on, and writes the result back into the project in place of the original.
+The knob is then 175 mm tall and stands on the plane where the cap meets it; the
+cap is the other 5 mm, so the bat is still 831 mm.
+
+Compared with its two sources: above the join it matches the downloaded knob to
+0.000 mm, bore included, so the sleeve's check against that bore still holds;
+below it, it matches the socket test piece that was printed, to 0.001 mm.
 
 ## Assumptions
 
@@ -114,6 +128,6 @@ measured; the bay is sized generously rather than to them.
 
 ## Status
 
-draft — rescaled to 100 % and sliced, not printed. The battery door's lock, cap
-and pack sleeve are designed and awaiting a test print; the merged knob is not
-done.
+draft — the twist lock was test-printed and works. The whole bat, with the
+merged knob, the cap and the sleeve, is built and sliced but not printed, so
+the sleeve's fit in the handle and the pack's fit in the sleeve are unproven.
