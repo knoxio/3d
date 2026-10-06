@@ -58,4 +58,5 @@ Its model README says how to run it.
 | [`art-frame`](models/art-frame) | 14-piece dovetailed LED frame for a 1100 × 600 relief tile artwork |
 | [`cabinet-light-guide`](models/cabinet-light-guide) | Hidden LED strip channel for a glass cabinet, 3 pieces per 560 mm run |
 | [`wrist-controller`](models/wrist-controller) | Enclosure for a wrist-worn costume remote, built around an existing perfboard |
+| [`baseball-bat`](models/baseball-bat) | Third-party honeycomb bat, rescaled and re-plated for the P1S; the mesh is not in the repo |
 | [`pcb-cases`](models/pcb-cases) | Parametric snap-fit cases for bare PCBs |
