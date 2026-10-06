@@ -48,12 +48,19 @@ knob_bottom = 11;           // board to the underside of the knob
 screen_pcb = [35.5, 33.5];
 screen_at = [0.1, 3.5];     // PCB corner in the shared frame (rough)
 screen_hole_d = 3.5;
-screen_hole_inset = [1.3, 2.55];   // from the PCB edges, x then y
+// Hole centres from the PCB's edges. Not symmetric down the arm: the measured
+// edge gaps were 0.8 at both sides, 0.5 at the front and 1.5 at the back, plus
+// half of the Ø3.5 hole. That makes the pitch 30.4 x 28.0.
+screen_hole_x = 0.8 + screen_hole_d / 2;
+screen_hole_y = [0.5 + screen_hole_d / 2, 1.5 + screen_hole_d / 2];
 glass = [34.5, 18.6];
 glass_inset = [0.5, 8.3];   // glass corner from the PCB corner
 glass_lip = 3.8;            // unlit strip along the glass's front edge
 glass_bezel = 1.8;          // unlit border along the long edges
-window_margin = 0.4;        // how far the window opens past the lit area
+// The glass's position on its PCB is only known to about a millimetre, so the
+// window opens well past the lit area: overshooting shows a sliver of unlit
+// glass, which is nearly invisible, where undershooting eats pixels.
+window_margin = 1.2;        // how far the window opens past the lit area
 glass_seat = 0.4;           // roof left over the glass's edge, to hold it
 window_bevel = 1.2;         // 45 deg flare on the outside, for the viewing angle
 label = "PURGE";
@@ -167,6 +174,8 @@ assert([for (f = fixings("elbow"))
 assert(knob_bottom >= top_hand + lid_t, "the knob fouls the hand lid");
 assert(knob_d > bush_d + knob_clear + 2, "the knob no longer hides its hole");
 
+echo(str("screen pins ", screen_pcb[0] - 2 * screen_hole_x, " x ",
+         screen_pcb[1] - screen_hole_y[0] - screen_hole_y[1], " mm apart"));
 echo(str("window ", win_hi[0] - win_lo[0], " x ", win_hi[1] - win_lo[1],
          " mm over a lit area of ", lit[0], " x ", lit[1],
          ", flaring to ", win_hi[0] - win_lo[0] + 2 * window_bevel, " x ",
@@ -397,10 +406,10 @@ module lid_elbow() {
 }
 
 function screen_holes() = [
-    for (x = [screen_at[0] + screen_hole_inset[0],
-              screen_at[0] + screen_pcb[0] - screen_hole_inset[0]],
-         y = [screen_at[1] + screen_hole_inset[1],
-              screen_at[1] + screen_pcb[1] - screen_hole_inset[1]]) [x, y]
+    for (x = [screen_at[0] + screen_hole_x,
+              screen_at[0] + screen_pcb[0] - screen_hole_x],
+         y = [screen_at[1] + screen_hole_y[0],
+              screen_at[1] + screen_pcb[1] - screen_hole_y[1]]) [x, y]
 ];
 
 
