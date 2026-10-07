@@ -138,13 +138,24 @@ tip. Measured by rasterising the wall from five radii, which agreed to 0.02 mm.
   curvature, prints unsupported, and reads as a stud.
 - It prints as modelled: plug on the bed, spike up, no supports.
 
-`nail-test.3mf` is a fit ladder — the hole's printed size is the one thing that
-cannot be read off the mesh. Pieces 1 to 6 are press fits from Ø8.5 down to
-Ø7.5 in 0.2 steps, numbered on the face you look at as you push them in. Pieces
-7 and 8 add a lip that snaps behind the inner surface, on plugs of Ø8.1 and
-Ø7.9; they are hollow and slotted so the lip can give, which leaves no middle
-to number, so they are told apart by their slots — two on the first, four on
-the second.
+### Fit, as printed
+
+The first ladder (`nail-test.3mf`, plugs Ø8.5 to Ø7.5) put **Ø8.50 tight and
+Ø8.30 snug**, so the hexagon prints close to its drawn 8.47 and the plug wants
+to be **Ø8.40**.
+
+Its two barbed pieces held only haphazardly, and the geometry says why: the
+lip's widest point sat 2.39 mm below the head, inside a 2.54 mm wall. The barb
+never cleared the back face, so anything that held was friction. The plug's
+depth is now worked out from where the **catch** has to land —
+`shell_wall + behind + lip_h` — which puts it 3.54 mm down, a millimetre clear
+of the wall.
+
+`nail-fit.3mf` is the second ladder: 1–3 are press fits at Ø8.45, Ø8.40 and
+Ø8.35; 4 is the corrected barb on a Ø8.35 plug; 5 and 6 are the same two sizes
+with **hexagonal** plugs, which bear on the whole flat instead of six lines but
+have to be clocked. The slotted ones have no middle to number — 4 is round, 6
+is hex.
 
 ## Assumptions
 
