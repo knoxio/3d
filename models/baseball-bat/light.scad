@@ -43,8 +43,15 @@ spine_wall = 1.4;       // mm
 wire_d = 5;             // mm, the lead from the battery runs inside the spine
 
 /* [Diffuser] */
+// Thin, for the light. One 0.6 wide extrusion rather than two of 0.42: the
+// 26 mm of air does the blending, so the wall only has to scatter, and every
+// 0.1 mm of it is light that never leaves the bat. The ends are doubled where
+// the collars grip and where it gets handled.
 diff_od = 66;           // mm
-diff_wall = 0.8;        // mm, two perimeters of a 0.4 nozzle
+diff_wall = 0.6;        // mm
+diff_end_wall = 0.9;    // mm
+diff_end_band = 10;     // mm, just past the collar: enough to keep the end
+                        // round and take being pushed, without costing light
 diff_fit = 0.25;        // mm per side, over the spiders' collars
 
 /* [Spider] */
@@ -65,7 +72,7 @@ $fs = 0.4;
 inradius = side / (2 * sqrt(3));
 circumradius = side / sqrt(3);
 diff_id = diff_od - 2 * diff_wall;
-collar_r = diff_id / 2 - diff_fit;
+collar_r = (diff_od - 2 * diff_end_wall) / 2 - diff_fit;
 fin_r = bore_r - bore_clear;
 
 function tube_len(core) = core - 2 * fin_len;
@@ -74,6 +81,8 @@ assert(diff_od / 2 < bore_r - nail_depth - 1,
        "the diffuser fouls the nails standing proud inside the bore");
 assert(side - strip_w >= 3, "no margin either side of the strip on the spine");
 assert(collar_r + 1 < fin_r, "the collar leaves the fins nothing to reach the bore with");
+assert(diff_end_wall >= diff_wall, "the ends are thinner than the middle");
+assert(2 * diff_end_band + 10 < tube_len(tip_core), "the end bands meet in the middle");
 assert(circumradius + socket_fit + 1.4 < collar_r, "the socket runs into the collar");
 assert(socket_h <= fin_len + collar_h, "the hub stands proud of the collar");
 
@@ -120,7 +129,12 @@ module spider() {
 module diffuser(len) {
     difference() {
         cylinder(d = diff_od, h = len);
-        translate([0, 0, -0.5]) cylinder(d = diff_id, h = len + 1);
+        translate([0, 0, diff_end_band])
+            cylinder(d = diff_id, h = len - 2 * diff_end_band);
+        translate([0, 0, -0.5])
+            cylinder(d = diff_od - 2 * diff_end_wall, h = diff_end_band + 0.5);
+        translate([0, 0, len - diff_end_band])
+            cylinder(d = diff_od - 2 * diff_end_wall, h = diff_end_band + 0.5);
     }
 }
 

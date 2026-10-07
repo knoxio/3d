@@ -46,7 +46,7 @@ uv run --script models/baseball-bat/bat.py out/baseball-bat
 | Plate | Weight | Notes |
 | --- | --- | --- |
 | `bat-p1s.3mf` | 363 g | 9 h 47 min, sliced; the bat itself |
-| `light-plate.3mf` | 91 g | white or natural filament, or the diffuser is pointless |
+| `light-plate.3mf` | 86 g | natural for the tube, white for the rest; never black |
 | `nail-nails.3mf` | 23 g | 24 nails, about 1 g each |
 
 `out/baseball-bat/bat-p1s.3mf` is the whole bat on one plate: the four
@@ -206,9 +206,29 @@ bore by 1.35 mm.
 joints are Ø30.6, so the core and diffuser are installed as the barrel and tip
 are glued, and the battery lead comes up the spine from the knob.
 
-**Print the diffuser in white, natural or translucent filament.** In black it
-is just a tube that blocks the light. The spine and spiders may as well be the
-same colour — white inside the bat reflects rather than swallows.
+### Getting light out
+
+The shell is **50% open** — 59 mm² a hexagon, sixteen to a row, rows every
+8 mm — so the holes are not the bottleneck. Two things are:
+
+1. **What the tube is made of.** Natural or uncoloured PLA passes far more than
+   white at the same thickness, and printed layers scatter plenty on their own.
+   This is the largest single lever and it costs nothing. In black the tube is
+   just something that blocks the light.
+2. **How thick it is.** The wall is **0.6 mm** — one wide extrusion rather than
+   two — with 0.9 mm bands over the first 10 mm at each end, where the collars
+   grip and where it gets pushed. Every tenth of a millimetre in the middle is
+   light that never leaves the bat; at the ends it is strength where a thin
+   66 mm tube wants to go out of round.
+
+The spine and spiders are better in **white**: they sit behind the LEDs, so
+what they do is bounce light back out. Tube natural, innards white, if there is
+a choice.
+
+What cannot be fixed: roughly half the light leaving the tube lands on black
+shell between the holes. Closing the 3.75 mm gap behind the shell would help a
+little, but Ø68.5 is the most that clears a nail standing proud inside the bore,
+and only the press-fit nail at that.
 
 `light-plate.3mf` is the whole core on one bed: two tubes, two spines, four
 spiders, 204 × 216 mm, 91 g. `light-sample.3mf` is 70 mm of the same, for
