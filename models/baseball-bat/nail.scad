@@ -15,20 +15,23 @@
 // Z is the nail's axis, 0 at the shell's outer surface, pointing outward. It
 // prints as modelled: plug on the bed, spike up.
 
-// parts: nail test fit
+// parts: nail test fit nails
 
-part = "nail"; // [nail, test, fit]
+part = "nail"; // [nail, test, fit, nails]
 
 /* [The shell, measured off the mesh] */
 hex_flats = 8.47;       // mm, across the flats
 shell_wall = 2.54;      // mm
 
 /* [Fit] */
-// A ladder of press fits put Ø8.50 tight and Ø8.30 snug in a printed hexagon,
-// so the hole comes out close to its drawn 8.47 and the plug wants to be 8.40.
-fit = 0.07;             // mm off the flats
-hex_plug = false;       // true bears on the whole flat, but has to be clocked
-grip = 0;               // mm the lip stands proud, each side: 0 is a press fit
+// Ladder one put Ø8.50 tight and Ø8.30 snug; ladder two put Ø8.40 in without
+// strain and Ø8.45 not at all. So the hole prints close to its drawn 8.47, and
+// a plug that goes everywhere is Ø8.35 — the barb, not the fit, does the
+// holding, which also covers the printed hexagons being slightly squashed.
+fit = 0.12;             // mm off the flats
+hex_plug = false;       // bears on the whole flat, but has to be clocked, and
+                        // cannot give where a hexagon came out squashed
+grip = 0.4;             // mm the lip stands proud, each side: 0 is a press fit
 plug_bore = 5.0;        // mm, hollow so the lip's legs can give
 slots = 4;              // they start at the bore, not the axis
 slot_w = 1.1;           // mm
@@ -41,6 +44,11 @@ head_d = 12;            // mm at its widest
 spike_d = 7;            // mm where it leaves the head
 spike_len = 32;         // mm clear of the shell
 tip_d = 1.4;            // mm: blunt enough to print, and to carry about
+
+/* [A batch of nails] */
+count = 24;
+plate_pitch = 18;       // mm, clear of the Ø12 heads
+per_row = 8;
 
 /* [Test ladder] */
 test_spike = 12;        // mm, a stub: this is about the fit, not the look
@@ -119,6 +127,13 @@ module fit() {
         nail(fit = fit_hexes[1], grip = 0.4, spike = test_spike, hex_plug = true);
 }
 
+module nails() {
+    for (i = [0 : count - 1])
+        translate([(i % per_row) * plate_pitch, floor(i / per_row) * plate_pitch,
+                   plug_depth(grip)])
+            nail();
+}
+
 module test() {
     for (i = [0 : len(test_fits) - 1])
         translate([i * test_pitch, 0, plug_len])
@@ -128,9 +143,11 @@ module test() {
             nail(fit = test_grips[i], grip = 0.45, spike = test_spike, slots = test_slots[i]);
 }
 
-echo(str("nail: plug Ø", hex_flats - fit, ", ", plug_depth(0), " deep; barbed plug ",
-         plug_depth(0.4), " deep so its catch clears a ", shell_wall, " wall by ", behind));
+echo(str("nail: plug Ø", hex_flats - fit, ", ", plug_depth(grip), " deep, catch ",
+         behind, " past a ", shell_wall, " wall; ", spike_len + (head_d - (hex_flats - fit)) / 2,
+         " mm proud of the bat"));
 
-if (part == "fit") fit();
+if (part == "nails") nails();
+else if (part == "fit") fit();
 else if (part == "test") test();
 else nail();

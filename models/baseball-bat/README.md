@@ -151,11 +151,42 @@ depth is now worked out from where the **catch** has to land —
 `shell_wall + behind + lip_h` — which puts it 3.54 mm down, a millimetre clear
 of the wall.
 
-`nail-fit.3mf` is the second ladder: 1–3 are press fits at Ø8.45, Ø8.40 and
-Ø8.35; 4 is the corrected barb on a Ø8.35 plug; 5 and 6 are the same two sizes
-with **hexagonal** plugs, which bear on the whole flat instead of six lines but
-have to be clocked. The slotted ones have no middle to number — 4 is round, 6
-is hex.
+The second ladder settled it: **Ø8.40 goes in without strain, Ø8.45 not at
+all**, and both hexagonal plugs fitted well. The printed hexagons are slightly
+squashed, which is the argument against the hexagonal plug — it cannot rotate
+to take up a hole that is out of shape, where a round one does not care.
+
+So the nail is a **round Ø8.35 plug with the barb**, and it is the barb that
+holds, not the fit. `nail-nails.3mf` is a batch of 24; `count` sets it.
+
+## Light core
+
+Three runs of 60/m WS2812B at 120° on a triangular spine, inside a thin printed
+tube. The spine puts the strips about 5 mm off the axis and the tube's wall is
+**26.6 mm** further out, so a 16.7 mm LED pitch has more than its own spacing in
+which to blend. That distance, not LED density, is what makes the hexagons glow
+rather than show dots — which is why 60/m is enough and 144/m would only cost
+runtime.
+
+58 LEDs over the barrel and tip: 3.5 A all white, about a fifth of that in use,
+so roughly 2–3 hours on the 2S 3000 mAh pack.
+
+Four pieces per lit section — a spine, a diffuser tube and a spider at each end.
+The spiders are separate because they have to reach the bat's bore to centre
+everything, and nothing that wide can pass down the tube: the tube slides onto
+the spine, then the spiders cap it. Their webs are in two tiers, out to the bore
+for the first 6 mm and then pulled back inside the collar.
+
+The diffuser is Ø66, which clears a barbed nail standing 2.4 mm proud inside the
+bore by 1.35 mm.
+
+**It cannot go in after the bat is built.** The passages through the handle
+joints are Ø30.6, so the core and diffuser are installed as the barrel and tip
+are glued, and the battery lead comes up the spine from the knob. Print
+`light-sample.3mf` first — 70 mm of spine, tube and both spiders — and check the
+glow with the real strip before committing the five hours the full set takes.
+
+About 112 g for both sections.
 
 ## Assumptions
 
