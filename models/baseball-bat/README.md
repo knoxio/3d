@@ -119,6 +119,44 @@ Compared with its two sources: above the join it matches the downloaded knob to
 0.000 mm, bore included, so the sleeve's check against that bore still holds;
 below it, it matches the socket test piece that was printed, to 0.001 mm.
 
+## Nails
+
+The hexagons are a straight prism through the shell, the same from bore to
+outside: **8.47 across the flats, 9.40 across the corners, in a 2.54 wall**.
+There are 16 to a row, every 22.4°, with rows staggered 8.0 mm apart, so 16 mm
+between rows that line up — about 300 on the barrel and as many again on the
+tip. Measured by rasterising the wall from five radii, which agreed to 0.02 mm.
+
+`nail.scad` is a spike on a flared head with a plug that pushes into a hexagon.
+
+- The plug is **round, not hexagonal**, sized to the flats so it bears on all
+  six. With twenty of these to push home, not having to clock each one is worth
+  more than the corner contact.
+- The head is a **45° cone, not a disc**. A disc would have to be dished to sit
+  on a Ø78.6 shell, and printed plug-down its rim would be a 2.4 mm overhang on
+  the very face that has to seat. A cone seats on its inner edge whatever the
+  curvature, prints unsupported, and reads as a stud.
+- It prints as modelled: plug on the bed, spike up, no supports.
+
+### Fit, as printed
+
+The first ladder (`nail-test.3mf`, plugs Ø8.5 to Ø7.5) put **Ø8.50 tight and
+Ø8.30 snug**, so the hexagon prints close to its drawn 8.47 and the plug wants
+to be **Ø8.40**.
+
+Its two barbed pieces held only haphazardly, and the geometry says why: the
+lip's widest point sat 2.39 mm below the head, inside a 2.54 mm wall. The barb
+never cleared the back face, so anything that held was friction. The plug's
+depth is now worked out from where the **catch** has to land —
+`shell_wall + behind + lip_h` — which puts it 3.54 mm down, a millimetre clear
+of the wall.
+
+`nail-fit.3mf` is the second ladder: 1–3 are press fits at Ø8.45, Ø8.40 and
+Ø8.35; 4 is the corrected barb on a Ø8.35 plug; 5 and 6 are the same two sizes
+with **hexagonal** plugs, which bear on the whole flat instead of six lines but
+have to be clocked. The slotted ones have no middle to number — 4 is round, 6
+is hex.
+
 ## Assumptions
 
 The knob's outline — Ø40 handle, Ø50 knob, 5 mm chamfers, 25 mm tall, Ø35 bore —
@@ -128,6 +166,7 @@ measured; the bay is sized generously rather than to them.
 
 ## Status
 
-draft — the twist lock was test-printed and works. The whole bat, with the
+draft — the twist lock was test-printed and works; the nail fit ladder is
+printed but not yet reported on. The whole bat, with the
 merged knob, the cap and the sleeve, is built and sliced but not printed, so
 the sleeve's fit in the handle and the pack's fit in the sleeve are unproven.
