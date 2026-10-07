@@ -17,24 +17,28 @@
 //
 // Z runs up the bat, 0 at the bottom of whichever section this is.
 
-// parts: spine-barrel spine-tip diffuser-barrel diffuser-tip spider sample
+// parts: spine-barrel spine-tip diffuser-barrel diffuser-tip spider sample plate
 
-part = "assembly"; // [assembly, spine-barrel, spine-tip, diffuser-barrel, diffuser-tip, spider, sample]
+part = "assembly"; // [assembly, spine-barrel, spine-tip, diffuser-barrel, diffuser-tip, spider, sample, plate]
 
 /* [The bat, measured off the mesh] */
-bore_r = 36.75;         // mm, barrel and tip
+// The bore is only Ø73.5 in the middle of each section. The barrel narrows to
+// Ø63.8 at its foot, where the taper's wall thickens, and to Ø69.1 at its head,
+// which is the socket the tip sits on; the tip is dome for its first 17 mm. So
+// the spiders, which have to reach the bore, only fit over these spans:
+bore_r = 36.75;         // mm, where the bore is full
 nail_depth = 2.4;       // mm a barbed nail reaches past the inner face
-barrel_len = 180;       // mm
-tip_len = 150;          // mm
-end_margin = 2;         // mm the assembly stops short of a section's ends
+barrel_core = 126;      // mm, sitting at z 35..161 of the barrel
+tip_core = 122;         // mm, 17 mm in from the dome
 
 /* [Strip: 60/m WS2812B] */
-strip_w = 10;           // mm
+strip_w = 10;           // mm, the usual width; the face takes up to 12
 strip_t = 1.6;          // mm with its adhesive
 runs = 3;
 
 /* [Spine] */
-side = 14;              // mm, each face of the triangle: the strip plus margin
+side = 16;              // mm, each face: wide enough that a 12 mm strip still
+                        // lands, since there is no second chance at printing
 spine_wall = 1.4;       // mm
 wire_d = 5;             // mm, the lead from the battery runs inside the spine
 
@@ -64,8 +68,7 @@ diff_id = diff_od - 2 * diff_wall;
 collar_r = diff_id / 2 - diff_fit;
 fin_r = bore_r - bore_clear;
 
-function assembly_len(section) = section - 2 * end_margin;
-function tube_len(section) = assembly_len(section) - 2 * fin_len;
+function tube_len(core) = core - 2 * fin_len;
 
 assert(diff_od / 2 < bore_r - nail_depth - 1,
        "the diffuser fouls the nails standing proud inside the bore");
@@ -75,9 +78,9 @@ assert(circumradius + socket_fit + 1.4 < collar_r, "the socket runs into the col
 assert(socket_h <= fin_len + collar_h, "the hub stands proud of the collar");
 
 echo(str("strip to diffuser ", diff_id / 2 - (inradius + strip_t), " mm, against a 16.7 mm LED pitch"));
-echo(str(runs, " runs over ", assembly_len(barrel_len) + assembly_len(tip_len),
-         " mm carry ", round(runs * (assembly_len(barrel_len) + assembly_len(tip_len)) * 60 / 1000),
-         " LEDs: ", round(runs * (assembly_len(barrel_len) + assembly_len(tip_len)) * 60 / 1000) * 0.06,
+echo(str(runs, " runs over ", barrel_core + tip_core, " mm carry ",
+         round(runs * (barrel_core + tip_core) * 60 / 1000), " LEDs: ",
+         round(runs * (barrel_core + tip_core) * 60 / 1000) * 0.06,
          " A all white, about a fifth of that in use"));
 
 module triangle(r, h) { linear_extrude(h) circle(r = r, $fn = 3); }
@@ -134,21 +137,32 @@ module lit(len) {
     color("ForestGreen") strips(len);
 }
 
-if (part == "spine-barrel") spine(assembly_len(barrel_len));
-else if (part == "spine-tip") spine(assembly_len(tip_len));
-else if (part == "diffuser-barrel") diffuser(tube_len(barrel_len));
-else if (part == "diffuser-tip") diffuser(tube_len(tip_len));
+if (part == "spine-barrel") spine(barrel_core);
+else if (part == "spine-tip") spine(tip_core);
+else if (part == "diffuser-barrel") diffuser(tube_len(barrel_core));
+else if (part == "diffuser-tip") diffuser(tube_len(tip_core));
 else if (part == "spider") spider();
 else if (part == "sample") {
     spine(sample_len);
-    translate([diff_od + 10, 0, 0]) diffuser(sample_len - 2 * fin_len);
+    translate([diff_od + 10, 0, 0]) diffuser(tube_len(sample_len));
     translate([0, diff_od + 10, 0]) spider();
     translate([diff_od + 10, diff_od + 10, 0]) spider();
 }
+else if (part == "plate") {
+    // Everything the lit core needs, on one bed, each piece as it prints. A
+    // spider reaches 36.2 out on one fin and its collar 32 all round, so it is
+    // 68 mm deep, not the 54 the fins alone suggest: the rows must clear that.
+    translate([diff_od / 2 + 4, diff_od / 2 + 4, 0]) diffuser(tube_len(barrel_core));
+    translate([diff_od * 1.5 + 16, diff_od / 2 + 4, 0]) diffuser(tube_len(tip_core));
+    translate([2 * diff_od + 36, 16, 0]) spine(barrel_core);
+    translate([2 * diff_od + 36, 46, 0]) spine(tip_core);
+    for (i = [0 : 3])
+        translate([36 + (i % 3) * 70, 112 + floor(i / 3) * 76, 0]) spider();
+}
 else {
-    lit(assembly_len(barrel_len));
+    lit(barrel_core);
     color("Peru", 0.10) difference() {
-        cylinder(r = bore_r + 2.54, h = barrel_len);
-        translate([0, 0, -1]) cylinder(r = bore_r, h = barrel_len + 2);
+        cylinder(r = bore_r + 2.54, h = barrel_core);
+        translate([0, 0, -1]) cylinder(r = bore_r, h = barrel_core + 2);
     }
 }

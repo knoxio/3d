@@ -43,6 +43,12 @@ uv run --script models/baseball-bat/bat.py out/baseball-bat
 
 ## Print
 
+| Plate | Weight | Notes |
+| --- | --- | --- |
+| `bat-p1s.3mf` | 363 g | 9 h 47 min, sliced; the bat itself |
+| `light-plate.3mf` | 91 g | white or natural filament, or the diffuser is pointless |
+| `nail-nails.3mf` | 23 g | 24 nails, about 1 g each |
+
 `out/baseball-bat/bat-p1s.3mf` is the whole bat on one plate: the four
 unchanged pieces, the knob with its new end, the battery cap and the sleeve.
 The project's own settings: PLA, 0.28 mm layers, 2 walls, 10 % infill, 5 mm
@@ -163,13 +169,29 @@ holds, not the fit. `nail-nails.3mf` is a batch of 24; `count` sets it.
 
 Three runs of 60/m WS2812B at 120° on a triangular spine, inside a thin printed
 tube. The spine puts the strips about 5 mm off the axis and the tube's wall is
-**26.6 mm** further out, so a 16.7 mm LED pitch has more than its own spacing in
+**26 mm** further out, so a 16.7 mm LED pitch has more than its own spacing in
 which to blend. That distance, not LED density, is what makes the hexagons glow
 rather than show dots — which is why 60/m is enough and 144/m would only cost
 runtime.
 
-58 LEDs over the barrel and tip: 3.5 A all white, about a fifth of that in use,
-so roughly 2–3 hours on the 2S 3000 mAh pack.
+The spine's faces are **16 mm** for a 10 mm strip. The extra margin is there
+because the strip was bought but not in hand when this was drawn, and a face
+that takes a 12 mm strip costs nothing.
+
+**The core is shorter than the lit section**, because the bore is only Ø73.5 in
+the middle of each part and the spiders have to reach it:
+
+| | Bore | Core |
+| --- | --- | --- |
+| Barrel foot | Ø63.8, thickening into the taper | — |
+| Barrel middle | Ø73.5 over z 35–161 | 126 mm |
+| Barrel head | Ø69.1, the socket the tip sits on | — |
+| Tip, first 17 mm | the dome | — |
+| Tip | Ø73.5 over z 17–139 | 122 mm |
+
+So 248 mm lit, 45 LEDs: 2.7 A all white, about a fifth of that in use, so
+roughly 3 hours on the 2S 3000 mAh pack. The hexagons past each end of the core
+catch spill from the open ends of the tube rather than going black.
 
 Four pieces per lit section — a spine, a diffuser tube and a spider at each end.
 The spiders are separate because they have to reach the bat's bore to centre
@@ -182,11 +204,15 @@ bore by 1.35 mm.
 
 **It cannot go in after the bat is built.** The passages through the handle
 joints are Ø30.6, so the core and diffuser are installed as the barrel and tip
-are glued, and the battery lead comes up the spine from the knob. Print
-`light-sample.3mf` first — 70 mm of spine, tube and both spiders — and check the
-glow with the real strip before committing the five hours the full set takes.
+are glued, and the battery lead comes up the spine from the knob.
 
-About 112 g for both sections.
+**Print the diffuser in white, natural or translucent filament.** In black it
+is just a tube that blocks the light. The spine and spiders may as well be the
+same colour — white inside the bat reflects rather than swallows.
+
+`light-plate.3mf` is the whole core on one bed: two tubes, two spines, four
+spiders, 204 × 216 mm, 91 g. `light-sample.3mf` is 70 mm of the same, for
+checking the glow against a real strip first where there is time for it.
 
 ## Assumptions
 
