@@ -59,8 +59,10 @@ fins = 3;
 fin_t = 1.8;            // mm
 fin_len = 6;            // mm it stands clear of the diffuser's end
 collar_h = 9;           // mm of spigot inside the diffuser
-socket_h = 11;          // mm of the spine it grips
-socket_fit = 0.25;      // mm per side
+socket_h = 11;          // mm of the spine the hub grips; the hole itself runs
+                        // right through, so the spine passes rather than butts
+socket_fit = 0.4;       // mm on the corners, so 0.2 on the flats: a triangle
+                        // in a triangle, and nothing here carries load
 bore_clear = 0.55;      // mm per side, fin tip to the bat's bore
 
 /* [Sample] */
@@ -122,7 +124,11 @@ module spider() {
                 translate([0, -fin_t / 2, fin_len]) cube([collar_r, fin_t, collar_h]);
             }
         }
-        translate([0, 0, -0.5]) triangle(circumradius + socket_fit, socket_h + 0.5);
+        // all the way through: the spine enters from the collar side, the same
+        // side the diffuser goes on, and carries on past. Stopping this hole at
+        // the hub's height left the inner webs sitting in the spine's path.
+        translate([0, 0, -0.5])
+            triangle(circumradius + socket_fit, fin_len + collar_h + 1);
     }
 }
 
