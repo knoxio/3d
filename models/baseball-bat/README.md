@@ -199,6 +199,14 @@ everything, and nothing that wide can pass down the tube: the tube slides onto
 the spine, then the spiders cap it. Their webs are in two tiers, out to the bore
 for the first 6 mm and then pulled back inside the collar.
 
+**The spider's socket runs right through it**, so the spine enters from the
+collar side — the same side the diffuser goes on — and carries on past. Cutting
+that hole only as deep as the hub left the inner webs sitting in the spine's
+path, 20 mm³ of solid interference at z 11–15 that no amount of pushing would
+have cleared. The socket is 0.4 mm oversize on the corners, 0.2 on the flats:
+a slip fit, since the bore and the tube do the centring and nothing here carries
+load.
+
 The diffuser is Ø66, which clears a barbed nail standing 2.4 mm proud inside the
 bore by 1.35 mm.
 
